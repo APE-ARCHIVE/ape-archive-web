@@ -4,6 +4,8 @@ import { cn } from '@/lib/utils';
 import { Header } from '@/components/shared/header';
 import { Footer } from '@/components/shared/footer';
 import { Toaster } from '@/components/ui/toaster';
+import { ThemeProvider } from '@/components/theme-provider';
+import { ModeToggle } from '@/components/mode-toggle';
 
 export const metadata: Metadata = {
   title: 'Lanka StudyShare',
@@ -26,12 +28,22 @@ export default function RootLayout({
         />
       </head>
       <body className={cn('min-h-screen bg-background font-body antialiased')}>
-        <div className="relative flex min-h-screen flex-col justify-center items-center">
-          <Header />
-          {children}
-          <Footer />
-        </div>
-        <Toaster />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <div className="relative flex min-h-screen flex-col justify-center items-center">
+            <Header />
+            {children}
+            <Footer />
+          </div>
+          <div className="fixed bottom-4 right-4 z-50">
+            <ModeToggle />
+          </div>
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   );

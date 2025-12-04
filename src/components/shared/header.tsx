@@ -27,6 +27,7 @@ import {
 } from '../ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 
+
 const navLinks = [
   { href: '/', label: 'Home', icon: Home },
   { href: '/browse', label: 'Browse PDFs', icon: FileText },
@@ -48,13 +49,58 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container px-4 mx-auto flex h-16 items-center">
-        <div className="mr-4 hidden md:flex">
-          <Link href="/" className="mr-6 flex items-center space-x-2">
+      <div className="container px-4 mx-auto flex h-16 items-center justify-between">
+        <div className="flex items-center">
+          <Link href="/" className="hidden md:flex items-center space-x-2 mr-6">
             <BookOpen className="h-6 w-6 text-primary" />
-            <span className="hidden font-bold sm:inline-block font-headline">Lanka StudyShare</span>
+            <span className="font-bold font-headline">Lanka StudyShare</span>
           </Link>
-          <nav className="flex items-center space-x-6 text-sm font-medium">
+
+          <Sheet open={isSheetOpen} onOpenChange={setSheetOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" className="mr-2 px-0 text-base hover:bg-transparent focus-visible:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 md:hidden">
+                <Menu className="h-6 w-6" />
+                <span className="sr-only">Toggle Menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="pr-0">
+              <Link href="/" className="mb-4 flex items-center" onClick={() => setSheetOpen(false)}>
+                <BookOpen className="mr-2 h-6 w-6 text-primary" />
+                <span className="font-bold font-headline">Lanka StudyShare</span>
+              </Link>
+              <div className="my-4 h-[calc(100vh-8rem)]">
+                <div className="flex flex-col space-y-3">
+                  {navLinks.map((link) => (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      onClick={() => setSheetOpen(false)}
+                      className={cn(
+                        'flex items-center gap-2 rounded-md p-2 transition-colors hover:text-primary',
+                        pathname === link.href ? 'bg-secondary text-primary' : 'text-foreground/70'
+                      )}
+                    >
+                      <link.icon className="h-5 w-5" />
+                      {link.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+              <SheetClose asChild>
+                <div />
+              </SheetClose>
+            </SheetContent>
+          </Sheet>
+
+          <Link href="/" className="flex items-center space-x-2 md:hidden">
+            <BookOpen className="h-6 w-6 text-primary" />
+            <span className="font-bold font-headline">Lanka StudyShare</span>
+          </Link>
+
+        </div>
+
+        <div className="flex items-center space-x-6">
+          <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
@@ -68,62 +114,7 @@ export function Header() {
               </Link>
             ))}
           </nav>
-        </div>
-
-        <Sheet open={isSheetOpen} onOpenChange={setSheetOpen}>
-          <SheetTrigger asChild>
-            <Button variant="ghost" className="mr-2 px-0 text-base hover:bg-transparent focus-visible:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 md:hidden">
-              <Menu className="h-6 w-6" />
-              <span className="sr-only">Toggle Menu</span>
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="pr-0">
-            <Link href="/" className="mb-4 flex items-center" onClick={() => setSheetOpen(false)}>
-              <BookOpen className="mr-2 h-6 w-6 text-primary" />
-              <span className="font-bold font-headline">Lanka StudyShare</span>
-            </Link>
-            <div className="my-4 h-[calc(100vh-8rem)]">
-              <div className="flex flex-col space-y-3">
-                {navLinks.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    onClick={() => setSheetOpen(false)}
-                    className={cn(
-                      'flex items-center gap-2 rounded-md p-2 transition-colors hover:text-primary',
-                      pathname === link.href ? 'bg-secondary text-primary' : 'text-foreground/70'
-                    )}
-                  >
-                    <link.icon className="h-5 w-5" />
-                    {link.label}
-                  </Link>
-                ))}
-              </div>
-            </div>
-            <SheetClose asChild>
-              <div />
-            </SheetClose>
-          </SheetContent>
-        </Sheet>
-        
-        <Link href="/" className="flex items-center space-x-2 md:hidden">
-          <BookOpen className="h-6 w-6 text-primary" />
-          <span className="font-bold font-headline">Lanka StudyShare</span>
-        </Link>
-        
-        <div className="flex flex-1 items-center justify-end space-x-2">
-          {isAuthenticated ? (
-            <UserNav />
-          ) : (
-            <>
-              <Button variant="ghost" asChild>
-                <Link href="/login">Login</Link>
-              </Button>
-              <Button asChild>
-                <Link href="/signup">Sign Up</Link>
-              </Button>
-            </>
-          )}
+          {isAuthenticated && <UserNav />}
         </div>
       </div>
     </header>

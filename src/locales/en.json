@@ -1,0 +1,32 @@
+{
+    "common": {
+        "appName": "Lanka StudyShare",
+        "home": "Home",
+        "browse": "Browse PDFs",
+        "upload": "Upload",
+        "about": "About",
+        "dashboard": "Dashboard",
+        "profile": "Profile",
+        "logout": "Log out",
+        "login": "Login",
+        "signup": "Sign Up",
+        "contribute": "Contribute"
+    },
+    "home": {
+        "heroTitle": "Lanka StudyShare",
+        "heroDescription": "Access and share study materials online during emergencies and anytime you need.",
+        "browseButton": "Browse PDFs",
+        "uploadButton": "Upload Resources",
+        "popularSubjectsTitle": "Popular Subjects",
+        "popularSubjectsDescription": "Explore a wide range of subjects shared by students across Sri Lanka.",
+        "latestUploadsTitle": "Latest Uploaded PDFs",
+        "latestUploadsDescription": "Check out the newest resources added to our collection.",
+        "viewAllButton": "View All PDFs",
+        "contributorsTitle": "Our Top Contributors",
+        "contributorsDescription": "Meet the dedicated individuals who power our community by sharing knowledge.",
+        "trustedTitle": "Trusted by Sri Lankan Students",
+        "trustedDescription": "Our platform is built to support the educational needs of students with reliable and accessible resources.",
+        "activeUsers": "Active Users",
+        "pdfsShared": "PDFs Shared"
+    }
+}
