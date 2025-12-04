@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { subjects, levels } from '@/lib/data';
+import { subjects, levels } from '@/constants/data';
 import { Filter } from 'lucide-react';
 
 const languages = ['Sinhala', 'Tamil', 'English'];
@@ -68,7 +68,7 @@ function FilterContent() {
           </SelectContent>
         </Select>
       </div>
-      
+
       <Accordion type="multiple" defaultValue={['subject', 'level']} className="w-full">
         <AccordionItem value="subject">
           <AccordionTrigger className="text-lg font-semibold">Subject</AccordionTrigger>

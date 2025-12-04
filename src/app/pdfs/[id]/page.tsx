@@ -1,17 +1,19 @@
-import { pdfs } from '@/lib/data';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { pdfs } from '@/constants/data';
+import { PlaceHolderImages } from '@/constants/placeholder-images';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Download, Share, User, Calendar, Book, GraduationCap, Languages, Tag, Star } from 'lucide-react';
+import { Download, Share, Calendar, Book, GraduationCap, Languages, Tag, Star, FileText } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { PdfCard } from '@/components/shared/pdf-card';
+import { use } from 'react';
 
-export default function PdfDetailPage({ params }: { params: { id: string } }) {
-  const pdf = pdfs.find((p) => p.id === params.id);
+export default function PdfDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
+  const pdf = pdfs.find((p) => p.id === id);
 
   if (!pdf) {
     notFound();
@@ -39,36 +41,36 @@ export default function PdfDetailPage({ params }: { params: { id: string } }) {
           </div>
 
           <Card>
-             <CardHeader>
-                <CardTitle>Metadata</CardTitle>
+            <CardHeader>
+              <CardTitle>Metadata</CardTitle>
             </CardHeader>
             <CardContent>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 text-sm">
-                    {metadata.map((item) => (
-                        <div key={item.label} className="flex items-center gap-3">
-                            <item.icon className="w-5 h-5 text-muted-foreground" />
-                            <div>
-                                <p className="font-semibold text-foreground">{item.value}</p>
-                                <p className="text-muted-foreground">{item.label}</p>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-                <Separator className="my-6" />
-                <div className="flex items-center gap-3">
-                    <Tag className="w-5 h-5 text-muted-foreground" />
-                    <div className="flex flex-wrap gap-2">
-                    {pdf.tags.map((tag) => (
-                        <Badge key={tag} variant="secondary">{tag}</Badge>
-                    ))}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 text-sm">
+                {metadata.map((item) => (
+                  <div key={item.label} className="flex items-center gap-3">
+                    <item.icon className="w-5 h-5 text-muted-foreground" />
+                    <div>
+                      <p className="font-semibold text-foreground">{item.value}</p>
+                      <p className="text-muted-foreground">{item.label}</p>
                     </div>
+                  </div>
+                ))}
+              </div>
+              <Separator className="my-6" />
+              <div className="flex items-center gap-3">
+                <Tag className="w-5 h-5 text-muted-foreground" />
+                <div className="flex flex-wrap gap-2">
+                  {pdf.tags.map((tag) => (
+                    <Badge key={tag} variant="secondary">{tag}</Badge>
+                  ))}
                 </div>
+              </div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-                <CardTitle>Preview</CardTitle>
+              <CardTitle>Preview</CardTitle>
             </CardHeader>
             <CardContent className="flex justify-center items-center bg-secondary/50 rounded-md p-4">
               {previewImage && (
@@ -126,13 +128,13 @@ export default function PdfDetailPage({ params }: { params: { id: string } }) {
               </CardHeader>
               <CardContent className="space-y-4">
                 {relatedPdfs.map(relatedPdf => (
-                    <div key={relatedPdf.id} className="flex items-start gap-3">
-                        <FileText className="w-5 h-5 mt-1 text-primary"/>
-                        <div>
-                            <Link href={`/pdfs/${relatedPdf.id}`} className="font-semibold hover:underline">{relatedPdf.title}</Link>
-                            <p className="text-xs text-muted-foreground">{relatedPdf.subject}</p>
-                        </div>
+                  <div key={relatedPdf.id} className="flex items-start gap-3">
+                    <FileText className="w-5 h-5 mt-1 text-primary" />
+                    <div>
+                      <Link href={`/pdfs/${relatedPdf.id}`} className="font-semibold hover:underline">{relatedPdf.title}</Link>
+                      <p className="text-xs text-muted-foreground">{relatedPdf.subject}</p>
                     </div>
+                  </div>
                 ))}
               </CardContent>
             </Card>

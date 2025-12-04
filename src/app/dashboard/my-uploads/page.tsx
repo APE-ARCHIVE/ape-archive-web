@@ -15,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { MoreHorizontal, Edit, Trash2 } from "lucide-react"
-import { pdfs } from "@/lib/data"
+import { pdfs } from "@/constants/data"
 import { cn } from "@/lib/utils"
 
 const userPdfs = pdfs.slice(0, 5); // Mock data for user's uploads
@@ -49,13 +49,13 @@ export default function MyUploadsPage() {
                   <Badge
                     variant={
                       pdf.status === 'Published' ? 'default' :
-                      pdf.status === 'Pending' ? 'secondary' : 'destructive'
+                        pdf.status === 'Pending' ? 'secondary' : 'destructive'
                     }
                     className={cn(
-                        pdf.status === 'Published' && 'bg-green-500/20 text-green-700 border-green-500/30 hover:bg-green-500/30',
-                        pdf.status === 'Pending' && 'bg-yellow-500/20 text-yellow-700 border-yellow-500/30 hover:bg-yellow-500/30',
-                        pdf.status === 'Rejected' && 'bg-red-500/20 text-red-700 border-red-500/30 hover:bg-red-500/30',
-                        'bg-opacity-50'
+                      pdf.status === 'Published' && 'bg-green-500/20 text-green-700 border-green-500/30 hover:bg-green-500/30',
+                      pdf.status === 'Pending' && 'bg-yellow-500/20 text-yellow-700 border-yellow-500/30 hover:bg-yellow-500/30',
+                      pdf.status === 'Rejected' && 'bg-red-500/20 text-red-700 border-red-500/30 hover:bg-red-500/30',
+                      'bg-opacity-50'
                     )}
                   >
                     {pdf.status}

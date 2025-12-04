@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { subjects, levels } from '@/lib/data';
+import { subjects, levels } from '@/constants/data';
 import { UploadCloud } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -42,23 +42,23 @@ const uploadFormSchema = z.object({
 type UploadFormValues = z.infer<typeof uploadFormSchema>;
 
 export function UploadForm() {
-    const { toast } = useToast();
+  const { toast } = useToast();
   const form = useForm<UploadFormValues>({
     resolver: zodResolver(uploadFormSchema),
     defaultValues: {
-        title: "",
-        description: "",
-        tags: "",
+      title: "",
+      description: "",
+      tags: "",
     },
     mode: 'onChange',
   });
-  
+
   const fileRef = form.register("file");
 
   function onSubmit(data: UploadFormValues) {
     toast({
-        title: "Submission Mockup",
-        description: "Your PDF has been submitted for review. (This is a frontend-only demonstration)",
+      title: "Submission Mockup",
+      description: "Your PDF has been submitted for review. (This is a frontend-only demonstration)",
     });
     console.log(data);
   }
@@ -97,54 +97,54 @@ export function UploadForm() {
           )}
         />
         <div className="grid md:grid-cols-2 gap-8">
-            <FormField
+          <FormField
             control={form.control}
             name="subject"
             render={({ field }) => (
-                <FormItem>
+              <FormItem>
                 <FormLabel>Subject</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
+                  <FormControl>
                     <SelectTrigger>
-                        <SelectValue placeholder="Select a subject" />
+                      <SelectValue placeholder="Select a subject" />
                     </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
+                  </FormControl>
+                  <SelectContent>
                     {subjects.map((s) => (
-                        <SelectItem key={s.name} value={s.name}>
+                      <SelectItem key={s.name} value={s.name}>
                         {s.name}
-                        </SelectItem>
+                      </SelectItem>
                     ))}
-                    </SelectContent>
+                  </SelectContent>
                 </Select>
                 <FormMessage />
-                </FormItem>
+              </FormItem>
             )}
-            />
-            <FormField
+          />
+          <FormField
             control={form.control}
             name="level"
             render={({ field }) => (
-                <FormItem>
+              <FormItem>
                 <FormLabel>Level</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
+                  <FormControl>
                     <SelectTrigger>
-                        <SelectValue placeholder="Select a grade or level" />
+                      <SelectValue placeholder="Select a grade or level" />
                     </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
+                  </FormControl>
+                  <SelectContent>
                     {levels.map((l) => (
-                        <SelectItem key={l} value={l}>
+                      <SelectItem key={l} value={l}>
                         {l}
-                        </SelectItem>
+                      </SelectItem>
                     ))}
-                    </SelectContent>
+                  </SelectContent>
                 </Select>
                 <FormMessage />
-                </FormItem>
+              </FormItem>
             )}
-            />
+          />
         </div>
         <FormField
           control={form.control}
@@ -207,21 +207,21 @@ export function UploadForm() {
               <FormLabel>PDF File</FormLabel>
               <FormControl>
                 <div className="flex justify-center w-full">
-                    <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-64 border-2 border-border border-dashed rounded-lg cursor-pointer bg-secondary/50 hover:bg-secondary">
-                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                            <UploadCloud className="w-10 h-10 mb-3 text-muted-foreground" />
-                            <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Click to upload</span> or drag and drop</p>
-                            <p className="text-xs text-muted-foreground">PDF only (MAX. 50MB)</p>
-                        </div>
-                        <input id="dropzone-file" type="file" className="hidden" accept="application/pdf" {...fileRef} />
-                    </label>
-                </div> 
+                  <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-64 border-2 border-border border-dashed rounded-lg cursor-pointer bg-secondary/50 hover:bg-secondary">
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                      <UploadCloud className="w-10 h-10 mb-3 text-muted-foreground" />
+                      <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Click to upload</span> or drag and drop</p>
+                      <p className="text-xs text-muted-foreground">PDF only (MAX. 50MB)</p>
+                    </div>
+                    <input id="dropzone-file" type="file" className="hidden" accept="application/pdf" {...fileRef} />
+                  </label>
+                </div>
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        
+
         <Button type="submit" size="lg" className="w-full md:w-auto">Submit for Review</Button>
       </form>
     </Form>
