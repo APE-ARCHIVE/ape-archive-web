@@ -32,61 +32,90 @@ export default function Home() {
 
 
   return (
-    <main className="flex-1">
+    <div className='flex flex-col w-full min-h-screen'>
       {/* Hero Section - Completely Redesigned */}
-      <section className="relative w-full pt-20 pb-24 md:pt-32 md:pb-40 overflow-hidden">
-        {/* Decorative Elements */}
-        {/* <div className="absolute top-20 right-10 w-72 h-72 bg-primary/5 rounded-full blur-3xl animate-pulse-glow" />
-        <div className="absolute bottom-10 left-10 w-96 h-96 bg-primary/5 rounded-full blur-3xl animate-pulse-glow" style={{ animationDelay: '1s' }} /> */}
-
+      <section className="relative w-full pt-12 pb-16 md:pt-32 md:pb-40 overflow-hidden">
         <div className="container relative z-10 px-4 md:px-6">
-          <div className="max-w-4xl mx-auto text-center space-y-8">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/20 rounded-full text-primary text-sm font-medium">
-              <Sparkles className="w-4 h-4" />
-              Trusted by 10,000+ Sri Lankan Students
-            </div>
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
+            {/* Left Column: Text Content */}
+            <div className="flex flex-col items-start text-left space-y-8">
 
-            {/* Bold Headline */}
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-balance">
-              {t('home.heroTitlePrefix')}
-              <span className="block text-primary mt-2">{t('home.heroTitleSuffix')}</span>
-            </h1>
+              {/* Bold Headline */}
+              <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight text-balance">
+                {t('home.heroTitlePrefix')}
+                <span className="block text-primary mt-2">{t('home.heroTitleSuffix')}</span>
+              </h1>
 
-            {/* Minimal Description */}
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto text-balance">
-              {t('home.heroDescription')}
-            </p>
+              {/* Minimal Description */}
+              <p className="text-lg md:text-xl text-muted-foreground max-w-xl text-balance">
+                {t('home.heroDescription')}
+              </p>
 
-            {/* Search Bar */}
-            <div className="max-w-2xl mx-auto">
-              <div className="relative group">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                <Input
-                  type="search"
-                  placeholder={t('common.searchPlaceholder')}
-                  className="pl-12 pr-4 h-14 text-base rounded-xl border-2 focus-visible:ring-primary focus-visible:ring-offset-4 shadow-lg"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
+              {/* Search Bar */}
+              <div className="w-full max-w-md">
+                <div className="relative group">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                  <Input
+                    type="search"
+                    placeholder={t('common.searchPlaceholder')}
+                    className="pl-12 pr-4 h-14 text-base rounded-xl border-2 focus-visible:ring-primary focus-visible:ring-offset-4 shadow-lg"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {/* Two Strong Buttons */}
+              <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+                <Button asChild size="lg" className="h-12 px-8 text-base rounded-xl shadow-lg hover:shadow-xl smooth-hover w-full sm:w-auto min-w-[200px]">
+                  <Link href="/browse">
+                    <BookOpen className="mr-2 h-5 w-5" />
+                    {t('home.browseButton')}
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Link>
+                </Button>
+                <Button asChild size="lg" variant="outline" className="h-12 px-8 text-base rounded-xl border-2 hover:bg-primary/5 hover:border-primary smooth-hover w-full sm:w-auto min-w-[200px]">
+                  <Link href="/upload">
+                    <FileText className="mr-2 h-5 w-5" />
+                    {t('home.uploadButton')}
+                  </Link>
+                </Button>
               </div>
             </div>
 
-            {/* Two Strong Buttons */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button asChild size="lg" className="h-12 px-8 text-base rounded-xl shadow-lg hover:shadow-xl smooth-hover min-w-[200px]">
-                <Link href="/browse">
-                  <BookOpen className="mr-2 h-5 w-5" />
-                  {t('home.browseButton')}
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="h-12 px-8 text-base rounded-xl border-2 hover:bg-primary/5 hover:border-primary smooth-hover min-w-[200px]">
-                <Link href="/upload">
-                  <FileText className="mr-2 h-5 w-5" />
-                  {t('home.uploadButton')}
-                </Link>
-              </Button>
+            {/* Right Column: Image & Decorations */}
+            <div className="relative hidden lg:block">
+              {/* Decorative Background Shapes */}
+              <div className="absolute -top-20 -right-20 w-[600px] h-[600px] bg-primary/10 rounded-full blur-3xl" />
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-gradient-to-br from-primary/20 to-transparent rounded-full opacity-50" />
+
+              {/* Main Image Container */}
+              <div className="relative z-10 w-full max-w-md mx-auto aspect-square">
+                {/* Yellow/Orange Circle Decoration (SVG) */}
+                <svg className="absolute -top-10 -right-10 w-full h-full text-primary/20 animate-spin-slow" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="10 10" />
+                </svg>
+
+                {/* Placeholder Image */}
+                <div className="w-full h-full rounded-3xl overflow-hidden shadow-2xl border-4 border-background relative bg-muted">
+                  <img
+                    src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=800&q=80"
+                    alt="Student Learning"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+
+                {/* Floating Card Decoration */}
+                <div className="absolute -bottom-6 -left-6 bg-card p-4 rounded-xl shadow-xl border border-border/50 flex items-center gap-3 animate-bounce-slow">
+                  <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+                    <TrendingUp className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold">98% Success</p>
+                    <p className="text-xs text-muted-foreground">Rate</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -95,7 +124,7 @@ export default function Home() {
       {/* Popular Subjects Section - Redesigned */}
       <section
         id="popular-subjects"
-        className="w-full py-4 md:py-24 bg-background"
+        className="w-full py-4 md:py-8"
       >
         <div className="container px-4 md:px-6">
           <div className="max-w-6xl mx-auto">
@@ -130,7 +159,7 @@ export default function Home() {
             </div>
 
             {/* 3×4 Grid with Minimal Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
               {subjects.slice(0, 12).map((subject, index) => {
                 const icons = [GraduationCap, Book, FileText, BookOpen, Award, TrendingUp];
                 const Icon = icons[index % icons.length];
@@ -177,7 +206,7 @@ export default function Home() {
       {/* Contributors Section - Redesigned */}
       <section
         id="our-contributors"
-        className="w-full py-4 md:py-24 bg-background"
+        className="w-full py-4 md:py-8"
       >
         <div className="container px-4 md:px-6">
           <div className="max-w-6xl mx-auto">
@@ -264,7 +293,7 @@ export default function Home() {
       {/* Latest Uploads Section - Redesigned */}
       <section
         id="latest-uploads"
-        className="w-full py-4 md:py-24 bg-background"
+        className="w-full py-4 md:py-8"
       >
         <div className="container px-4 md:px-6">
           <div className="max-w-6xl mx-auto">
@@ -301,7 +330,7 @@ export default function Home() {
           </div>
         </div>
       </section>
-    </main>
+    </div>
   );
 }
 

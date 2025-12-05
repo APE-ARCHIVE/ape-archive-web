@@ -45,7 +45,7 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 shadow-sm">
-      <div className="container px-4 mx-auto flex h-16 items-center justify-between">
+      <div className="container max-w-7xl px-4 mx-auto flex h-16 items-center justify-between">
         <div className="flex items-center gap-2">
           <Link href="/" className="hidden md:flex items-center space-x-2 group">
             <div className="relative w-[135px] aspect-video">

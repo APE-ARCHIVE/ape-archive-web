@@ -11,6 +11,22 @@ import { LanguageProvider } from '@/lib/i18n-context';
 export const metadata: Metadata = {
   title: 'APE ARCHIVE',
   description: 'Access and share study materials online during emergencies and anytime you need.',
+  openGraph: {
+    title: 'APE ARCHIVE',
+    description: 'Access and share study materials online during emergencies and anytime you need.',
+    url: process.env.NEXT_PUBLIC_APP_URL,
+    siteName: 'APE ARCHIVE',
+    images: [
+      {
+        url: `${process.env.NEXT_PUBLIC_APP_URL}/logo/open-graph.png`,
+        width: 1200,
+        height: 630,
+        alt: 'APE ARCHIVE',
+      },
+    ],
+    locale: 'en_US',
+    type: 'website',
+  },
 };
 
 export default function RootLayout({
@@ -36,10 +52,21 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <div className="relative flex min-h-screen max-w-7xl px-4 mx-auto flex-col justify-center items-center">
+            <div className="relative min-h-screen w-full bg-background">
+              {/*  Diagonal Cross Grid Background */}
+              <div
+                className="absolute inset-0 z-0 opacity-40
+    [background-image:linear-gradient(45deg,transparent_49%,hsl(var(--border))_49%,hsl(var(--border))_51%,transparent_51%),linear-gradient(-45deg,transparent_49%,hsl(var(--border))_49%,hsl(var(--border))_51%,transparent_51%)]
+    [background-size:40px_40px]"
+              ></div>
+
               <Header />
-              {children}
-              <Footer />
+              <div className="relative z-10 flex min-h-screen max-w-7xl w-full px-4 mx-auto flex-col justify-center items-center">
+                {children}
+              </div>
+              <div className="relative z-50">
+                <Footer />
+              </div>
             </div>
             <div className="fixed bottom-4 right-4 z-50">
               <ModeToggle />

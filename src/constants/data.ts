@@ -5,6 +5,8 @@ import {
   Info,
   LayoutDashboard,
   Users,
+  Search,
+  ScrollText,
 } from "lucide-react";
 
 export type Pdf = {
@@ -212,7 +214,9 @@ export const contributors: Contributor[] = [
 
 export const navLinks = [
   { href: "/", label: "Home", icon: Home },
-  { href: "/browse", label: "Library", icon: FileText },
+  { href: "/library", label: "Library", icon: FileText },
+  { href: "/search", label: "Search", icon: Search },
+  { href: "/news", label: "News", icon: ScrollText },
   { href: "/upload", label: "Upload", icon: Upload },
   { href: "/about", label: "About", icon: Info },
 ];
