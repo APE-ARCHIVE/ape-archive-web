@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -22,20 +23,29 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { subjects, levels } from '@/constants/data';
-import { UploadCloud } from 'lucide-react';
+import { UploadCloud, Loader2, CheckCircle, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { apiClient } from '@/lib/api';
 
+// Tag interface
+interface Tag {
+  id: string;
+  name: string;
+  group: string;
+}
+
+interface GroupedTags {
+  [group: string]: Tag[];
+}
+
+// Form schema matching API requirements
 const uploadFormSchema = z.object({
-  title: z.string().min(5, 'Title must be at least 5 characters long.'),
-  description: z.string().min(20, 'Description must be at least 20 characters long.'),
+  title: z.string().optional(),
+  description: z.string().optional(),
+  grade: z.string({ required_error: 'Please select a grade.' }),
   subject: z.string({ required_error: 'Please select a subject.' }),
-  level: z.string({ required_error: 'Please select a level.' }),
-  language: z.enum(['Sinhala', 'Tamil', 'English'], {
-    required_error: 'You need to select a language.',
-  }),
-  tags: z.string().min(3, 'Please add at least one tag.'),
+  lesson: z.string({ required_error: 'Please enter the lesson/topic.' }).min(1, 'Lesson is required'),
+  medium: z.string({ required_error: 'Please select a medium.' }),
   file: z.any().refine((files) => files?.length === 1, 'File is required.'),
 });
 
@@ -43,48 +53,169 @@ type UploadFormValues = z.infer<typeof uploadFormSchema>;
 
 export function UploadForm() {
   const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [groupedTags, setGroupedTags] = useState<GroupedTags>({});
+  const [isLoadingTags, setIsLoadingTags] = useState(true);
+  const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
+
   const form = useForm<UploadFormValues>({
     resolver: zodResolver(uploadFormSchema),
     defaultValues: {
-      title: "",
-      description: "",
-      tags: "",
+      title: '',
+      description: '',
+      lesson: '',
     },
     mode: 'onChange',
   });
 
-  const fileRef = form.register("file");
+  const fileRef = form.register('file');
 
-  function onSubmit(data: UploadFormValues) {
-    toast({
-      title: "Submission Mockup",
-      description: "Your PDF has been submitted for review. (This is a frontend-only demonstration)",
-    });
-    console.log(data);
+  // Fetch tags from API
+  useEffect(() => {
+    async function fetchTags() {
+      try {
+        const response = await apiClient.get('/api/v1/library/tags');
+        console.log('Tags API response:', response.data);
+
+        if (response.data?.success && response.data?.data) {
+          const data = response.data.data;
+
+          // Check if data is already grouped (object) or an array
+          if (Array.isArray(data)) {
+            // Data is an array of tags - group by group property
+            const grouped = data.reduce((acc: GroupedTags, tag: Tag) => {
+              if (!acc[tag.group]) {
+                acc[tag.group] = [];
+              }
+              acc[tag.group].push(tag);
+              return acc;
+            }, {});
+            setGroupedTags(grouped);
+          } else if (typeof data === 'object') {
+            // Data is already grouped - use as-is
+            setGroupedTags(data as GroupedTags);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch tags:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load form options. Please refresh the page.',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsLoadingTags(false);
+      }
+    }
+
+    fetchTags();
+  }, [toast]);
+
+  // Handle file selection
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      setSelectedFileName(files[0].name);
+    } else {
+      setSelectedFileName(null);
+    }
+  };
+
+  // Clear selected file
+  const clearFile = () => {
+    form.setValue('file', undefined);
+    setSelectedFileName(null);
+    // Reset the file input
+    const fileInput = document.getElementById('dropzone-file') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = '';
+    }
+  };
+
+  async function onSubmit(data: UploadFormValues) {
+    setIsSubmitting(true);
+
+    try {
+      // Create FormData for multipart upload
+      const formData = new FormData();
+      formData.append('file', data.file[0]);
+      formData.append('grade', data.grade);
+      formData.append('subject', data.subject);
+      formData.append('lesson', data.lesson);
+      formData.append('medium', data.medium);
+      if (data.title) formData.append('title', data.title);
+      if (data.description) formData.append('description', data.description);
+
+      const response = await apiClient.post('/api/v1/resources/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      if (response.data?.success) {
+        toast({
+          title: 'Success!',
+          description: 'Your resource has been uploaded and is pending review.',
+        });
+        // Reset form
+        form.reset();
+        setSelectedFileName(null);
+      } else {
+        throw new Error(response.data?.message || 'Upload failed');
+      }
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      toast({
+        title: 'Upload Failed',
+        description: error?.response?.data?.message || error?.message || 'Something went wrong. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  // Get tags for specific groups
+  const grades = groupedTags['Grade'] || [];
+  const subjects = groupedTags['Subject'] || [];
+  const mediums = groupedTags['Medium'] || [];
+
+  if (isLoadingTags) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        {/* Title - Optional */}
         <FormField
           control={form.control}
           name="title"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Title</FormLabel>
+              <FormLabel>Title (Optional)</FormLabel>
               <FormControl>
                 <Input placeholder="e.g., A/L Chemistry Past Paper 2022" {...field} />
               </FormControl>
+              <FormDescription>
+                If left empty, the filename will be used.
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
+
+        {/* Description - Optional */}
         <FormField
           control={form.control}
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Description</FormLabel>
+              <FormLabel>Description (Optional)</FormLabel>
               <FormControl>
                 <Textarea
                   placeholder="Provide a brief description of the PDF content."
@@ -96,23 +227,25 @@ export function UploadForm() {
             </FormItem>
           )}
         />
-        <div className="grid md:grid-cols-2 gap-8">
+
+        {/* Grade and Subject */}
+        <div className="grid md:grid-cols-2 gap-6">
           <FormField
             control={form.control}
-            name="subject"
+            name="grade"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Subject</FormLabel>
+                <FormLabel>Grade *</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select a subject" />
+                      <SelectValue placeholder="Select a grade" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {subjects.map((s) => (
-                      <SelectItem key={s.name} value={s.name}>
-                        {s.name}
+                    {grades.map((tag) => (
+                      <SelectItem key={tag.id} value={tag.name}>
+                        {tag.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -121,22 +254,23 @@ export function UploadForm() {
               </FormItem>
             )}
           />
+
           <FormField
             control={form.control}
-            name="level"
+            name="subject"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Level</FormLabel>
+                <FormLabel>Subject *</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select a grade or level" />
+                      <SelectValue placeholder="Select a subject" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {levels.map((l) => (
-                      <SelectItem key={l} value={l}>
-                        {l}
+                    {subjects.map((tag) => (
+                      <SelectItem key={tag.id} value={tag.name}>
+                        {tag.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -146,75 +280,100 @@ export function UploadForm() {
             )}
           />
         </div>
-        <FormField
-          control={form.control}
-          name="language"
-          render={({ field }) => (
-            <FormItem className="space-y-3">
-              <FormLabel>Language</FormLabel>
-              <FormControl>
-                <RadioGroup
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                  className="flex flex-col md:flex-row space-y-1 md:space-y-0 md:space-x-4"
-                >
-                  <FormItem className="flex items-center space-x-3 space-y-0">
-                    <FormControl>
-                      <RadioGroupItem value="Sinhala" />
-                    </FormControl>
-                    <FormLabel className="font-normal">Sinhala</FormLabel>
-                  </FormItem>
-                  <FormItem className="flex items-center space-x-3 space-y-0">
-                    <FormControl>
-                      <RadioGroupItem value="Tamil" />
-                    </FormControl>
-                    <FormLabel className="font-normal">Tamil</FormLabel>
-                  </FormItem>
-                  <FormItem className="flex items-center space-x-3 space-y-0">
-                    <FormControl>
-                      <RadioGroupItem value="English" />
-                    </FormControl>
-                    <FormLabel className="font-normal">English</FormLabel>
-                  </FormItem>
-                </RadioGroup>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="tags"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Tags</FormLabel>
-              <FormControl>
-                <Input placeholder="e.g., past paper, physics, 2021" {...field} />
-              </FormControl>
-              <FormDescription>
-                Enter tags separated by commas to help others find your resource.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
 
+        {/* Lesson and Medium */}
+        <div className="grid md:grid-cols-2 gap-6">
+          <FormField
+            control={form.control}
+            name="lesson"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Lesson / Topic *</FormLabel>
+                <FormControl>
+                  <Input placeholder="e.g., Unit 1, Chapter 3, etc." {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="medium"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Medium *</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select medium" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {mediums.map((tag) => (
+                      <SelectItem key={tag.id} value={tag.name}>
+                        {tag.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        {/* File Upload */}
         <FormField
           control={form.control}
           name="file"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>PDF File</FormLabel>
+              <FormLabel>PDF File *</FormLabel>
               <FormControl>
                 <div className="flex justify-center w-full">
-                  <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-64 border-2 border-border border-dashed rounded-lg cursor-pointer bg-secondary/50 hover:bg-secondary">
-                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                      <UploadCloud className="w-10 h-10 mb-3 text-muted-foreground" />
-                      <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Click to upload</span> or drag and drop</p>
-                      <p className="text-xs text-muted-foreground">PDF only (MAX. 50MB)</p>
+                  {selectedFileName ? (
+                    <div className="flex items-center justify-between w-full p-4 border-2 border-border rounded-lg bg-secondary/50">
+                      <div className="flex items-center gap-3">
+                        <CheckCircle className="h-5 w-5 text-green-500" />
+                        <span className="text-sm font-medium truncate max-w-[300px]">
+                          {selectedFileName}
+                        </span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={clearFile}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
                     </div>
-                    <input id="dropzone-file" type="file" className="hidden" accept="application/pdf" {...fileRef} />
-                  </label>
+                  ) : (
+                    <label
+                      htmlFor="dropzone-file"
+                      className="flex flex-col items-center justify-center w-full h-48 border-2 border-border border-dashed rounded-lg cursor-pointer bg-secondary/50 hover:bg-secondary transition-colors"
+                    >
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <UploadCloud className="w-10 h-10 mb-3 text-muted-foreground" />
+                        <p className="mb-2 text-sm text-muted-foreground">
+                          <span className="font-semibold">Click to upload</span> or drag and drop
+                        </p>
+                        <p className="text-xs text-muted-foreground">PDF only (MAX. 50MB)</p>
+                      </div>
+                      <input
+                        id="dropzone-file"
+                        type="file"
+                        className="hidden"
+                        accept="application/pdf"
+                        {...fileRef}
+                        onChange={(e) => {
+                          fileRef.onChange(e);
+                          handleFileChange(e);
+                        }}
+                      />
+                    </label>
+                  )}
                 </div>
               </FormControl>
               <FormMessage />
@@ -222,7 +381,16 @@ export function UploadForm() {
           )}
         />
 
-        <Button type="submit" size="lg" className="w-full md:w-auto">Submit for Review</Button>
+        <Button type="submit" size="lg" className="w-full md:w-auto" disabled={isSubmitting}>
+          {isSubmitting ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Uploading...
+            </>
+          ) : (
+            'Submit for Review'
+          )}
+        </Button>
       </form>
     </Form>
   );
