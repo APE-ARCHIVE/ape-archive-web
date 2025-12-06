@@ -75,8 +75,8 @@ export default function RootLayout({
                 </div>
                 {/* Floating buttons - bottom right */}
                 <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-3">
-                  <BugReportButton /> 
-                  <ModeToggle />
+                  <ModeToggle /><BugReportButton />
+
                 </div>
                 <Toaster />
               </ThemeProvider>
