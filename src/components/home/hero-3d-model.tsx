@@ -47,7 +47,7 @@ export function Hero3DModel() {
                 <pointLight position={[0, -2, 2]} intensity={1} color="hsl(3.2, 100%, 59.4%)" />
 
                 <Suspense fallback={null}>
-                    <Model position={[0, 0, 0]} rotation={[6, 4.3, 0.13]} />
+                    <Model position={[0, 0, 0]} rotation={[6.15, 4.7, -0.1]} />
                     <Environment preset="studio" />
                 </Suspense>
 

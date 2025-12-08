@@ -10,7 +10,7 @@ export function HeroSection() {
     const { t } = useLanguage();
 
     return (
-        <section className="relative w-full pt-6 pb-8 md:pt-16 md:pb-24 overflow-hidden">
+        <section className="relative w-full pt-6 pb-8 md:pt-12 md:pb-8 overflow-hidden">
             <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_center,var(--tw-gradient-stops))] from-primary/20 via-background/5 to-transparent" />
             <div className="container relative z-10 px-4 md:px-6">
                 <div className="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">

@@ -26,10 +26,6 @@ export function PopularSubjectsSection() {
                 <div className="max-w-6xl mx-auto">
                     {/* Section Header */}
                     <div className="text-center space-y-4 mb-12">
-                        <Badge variant="outline" className="border-primary/30 text-primary">
-                            <Book className="w-3 h-3 mr-1" />
-                            {t('home.popularSubjectsBadge')}
-                        </Badge>
                         <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
                             {t('home.popularSubjectsTitle')}
                         </h2>
