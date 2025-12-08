@@ -3,35 +3,38 @@
 import { Github } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import Image from 'next/image';
 
 const contributors = [
-    { name: 'Oshan Avishka', githubProfile: 'https://github.com/APE-ARCHIVE' },
-    { name: 'Dilini Silva', githubProfile: 'https://github.com/APE-ARCHIVE' },
-    { name: 'Banuka', githubProfile: 'https://github.com/APE-ARCHIVE' },
-    { name: 'Kavindi Samaraweera', githubProfile: 'https://github.com/APE-ARCHIVE' },
-    { name: 'Kavindu Jayasundara', githubProfile: 'https://github.com/APE-ARCHIVE' },
-    { name: 'Lahiru', githubProfile: 'https://github.com/APE-ARCHIVE' },
-    { name: 'Nipun Theekshana', githubProfile: 'https://github.com/APE-ARCHIVE' },
-    { name: 'Sasuni Wijerathne', githubProfile: 'https://github.com/APE-ARCHIVE' },
-    { name: 'Shehan', githubProfile: 'https://github.com/APE-ARCHIVE' },
-    { name: 'Vidura', githubProfile: 'https://github.com/APE-ARCHIVE' },
-    { name: 'Dhanika', githubProfile: 'https://github.com/APE-ARCHIVE' },
-    { name: 'Isuru Rathnayaka', githubProfile: 'https://github.com/APE-ARCHIVE' },
-    { name: 'Pulindu Dinal Godage', githubProfile: 'https://github.com/APE-ARCHIVE' },
-    { name: 'Ruvinda Shaluka', githubProfile: 'https://github.com/APE-ARCHIVE' },
-    { name: 'Saumya Sithumini', githubProfile: 'https://github.com/APE-ARCHIVE' },
-];
+    { name: "Nipun Hemal", githubProfile: "https://res.cloudinary.com/dsuj0mjxy/image/upload/v1765043004/Nipun_Hemal_ommk9s.jpg" },
+    { name: "Oshan Avishka", githubProfile: "https://res.cloudinary.com/dsuj0mjxy/image/upload/v1765042002/Oshan_Avishka_bmtffr.jpg" },
+    { name: "Shehan Anujaya", githubProfile: "https://res.cloudinary.com/dsuj0mjxy/image/upload/v1765043003/Shehan_Anujaya_dotkyn.jpg" },
+    { name: "Dilini Chamika", githubProfile: "https://res.cloudinary.com/dsuj0mjxy/image/upload/v1765043243/Dilini_Chamika_huwaaw.jpg" },
+    { name: "Bhanuka Viraj", githubProfile: "https://res.cloudinary.com/dsuj0mjxy/image/upload/v1765042009/Bhanuka_Viraj_lwxjvn.png" },
+    { name: "Vidura Prayadarshana", githubProfile: "https://res.cloudinary.com/dsuj0mjxy/image/upload/v1765042001/Visura_Priyadharshana_nkhmkj.jpg" },
+    { name: "Sasuni Wijerathne", githubProfile: "https://res.cloudinary.com/dsuj0mjxy/image/upload/v1765042011/Sasuni_Wijerathne_jdjpq6.jpg" },
+    { name: "Sithumini Dulanjalee", githubProfile: "https://res.cloudinary.com/dsuj0mjxy/image/upload/v1765042002/Sithumini_Dulanjalee_akuxvk.jpg" },
+    { name: "Ranuthi Pehansa", githubProfile: "https://res.cloudinary.com/dsuj0mjxy/image/upload/v1765042003/Ranuthi_pehansa_Peiris.jpeg_qktvlq.jpg" },
+    { name: "Yasiru Sahan", githubProfile: "https://res.cloudinary.com/dsuj0mjxy/image/upload/v1765042013/Yasiru_sahan.jpeg_io9q8t.jpg" },
+    { name: "Isuru Rathnajake", githubProfile: "https://res.cloudinary.com/dsuj0mjxy/image/upload/v1765042010/Isuru_Rathnajake_niyzhb.jpg" },
+    { name: "Saumya Divyanjalee", githubProfile: "https://res.cloudinary.com/dsuj0mjxy/image/upload/v1765042000/Saumya_Divyanjalee.jpeg_edva5o.jpg" },
+    { name: "Pulindu Dinel", githubProfile: "https://res.cloudinary.com/dsuj0mjxy/image/upload/v1765042005/Pulindu_Dinel_tuibhs.jpg" },
+    { name: "Manuja Ravishka", githubProfile: "https://res.cloudinary.com/dsuj0mjxy/image/upload/v1765042004/Manuja_Ravishka_oth84v.jpg" },
+    { name: "Imasha Dewmi", githubProfile: "https://res.cloudinary.com/dsuj0mjxy/image/upload/v1765042003/Imasha_Dewmi_zn6fu3.jpg" },
+    { name: "Dhanika D Suranga", githubProfile: "https://res.cloudinary.com/dsuj0mjxy/image/upload/v1765042003/Dhanika_D_Suranga_ydnqip.jpg" },
+]
+
 
 // Split contributors into rows for the river effect
 const row1 = contributors.slice(0, 5);
 const row2 = contributors.slice(5, 10);
-const row3 = contributors.slice(10, 15);
+const row3 = contributors.slice(10, 16);
 
 export default function ContributorsPage() {
     return (
         <div className="min-h-screen">
             {/* Header Section */}
-             <div className="py-8 md:py-16 px-4">
+            <div className="py-8 md:py-16 px-4">
                 <div className="space-y-4 md:space-y-6 text-center">
                     <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
                         Meet Our Amazing
@@ -63,7 +66,7 @@ export default function ContributorsPage() {
                 <div className="flex mb-8 animate-marquee-slow">
                     <div className="flex gap-8 pr-8">
                         {[...row1, ...row1, ...row1, ...row1].map((contributor, index) => (
-                            <BubbleCard key={`r1-${index}`} contributor={contributor} size="large" index={index} />
+                            <BubbleCard key={`r1-${index}`} contributor={contributor} size="medium" index={index} />
                         ))}
                     </div>
                 </div>
@@ -81,7 +84,7 @@ export default function ContributorsPage() {
                 <div className="flex animate-marquee-medium">
                     <div className="flex gap-10 pr-10">
                         {[...row3, ...row3, ...row3, ...row3].map((contributor, index) => (
-                            <BubbleCard key={`r3-${index}`} contributor={contributor} size="large" index={index} />
+                            <BubbleCard key={`r3-${index}`} contributor={contributor} size="medium" index={index} />
                         ))}
                     </div>
                 </div>
@@ -121,12 +124,16 @@ function BubbleCard({ contributor, size, index = 0 }: { contributor: { name: str
                     group-hover:shadow-xl
                     group-hover:shadow-primary/30
                     animate-bubble
+                    relative overflow-hidden
                 `}
                 style={{ animationDelay: delay }}
             >
-                <span className="font-bold text-primary">
-                    {contributor.name.charAt(0)}
-                </span>
+                <Image
+                    src={contributor.githubProfile}
+                    alt={contributor.name}
+                    fill
+                    className="object-cover"
+                />
             </div>
             <span className="text-xs text-muted-foreground group-hover:text-primary transition-colors whitespace-nowrap">
                 {contributor.name}

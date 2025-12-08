@@ -146,9 +146,24 @@ export function UploadForm() {
       if (data.title) formData.append('title', data.title);
       if (data.description) formData.append('description', data.description);
 
+      // Get the token from cookies to ensure it's passed
+      const Cookies = (await import('js-cookie')).default;
+      const token = Cookies.get('accessToken');
+
+      if (!token) {
+        toast({
+          title: 'Authentication Required',
+          description: 'Please log in to upload resources.',
+          variant: 'destructive',
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
       const response = await apiClient.post('/api/v1/resources/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
+          'Authorization': `Bearer ${token}`,
         },
       });
 
