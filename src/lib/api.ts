@@ -11,7 +11,7 @@ const AUTH_COOKIE_NAME = "accessToken";
 // Create axios instance with default config
 export const apiClient = axios.create({
   baseURL:
-    process.env.NEXT_PUBLIC_API_URL || "https://server-apearchive.freeddns.org",
+    process.env.NEXT_PUBLIC_API_URL || "",
   timeout: 30000,
   headers: {
     "Content-Type": "application/json",

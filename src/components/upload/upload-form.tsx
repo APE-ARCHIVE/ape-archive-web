@@ -32,6 +32,9 @@ interface Tag {
   id: string;
   name: string;
   group: string;
+  slug?: string;
+  source?: 'SYSTEM' | 'USER';
+  createdAt?: string;
 }
 
 interface GroupedTags {
@@ -190,10 +193,10 @@ export function UploadForm() {
     }
   }
 
-  // Get tags for specific groups
-  const grades = groupedTags['Grade'] || [];
-  const subjects = groupedTags['Subject'] || [];
-  const mediums = groupedTags['Medium'] || [];
+  // Get tags for specific groups (support both UPPERCASE and lowercase for API compatibility)
+  const grades = groupedTags['GRADE'] || groupedTags['Grade'] || [];
+  const subjects = groupedTags['SUBJECT'] || groupedTags['Subject'] || [];
+  const mediums = groupedTags['MEDIUM'] || groupedTags['Medium'] || [];
 
   if (isLoadingTags) {
     return (

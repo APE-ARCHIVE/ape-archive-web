@@ -1,0 +1,1561 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "APE Archive API",
+    "description": "API Documentation for APE Archive",
+    "version": "1.0.0"
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Enter your JWT token (access token from Google OAuth callback)"
+      }
+    },
+    "schemas": {}
+  },
+  "security": [
+    {
+      "BearerAuth": []
+    }
+  ],
+  "paths": {
+    "/": {
+      "get": {
+        "operationId": "getIndex",
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/api/v1/health/": {
+      "get": {
+        "operationId": "getApiV1Health",
+        "tags": [
+          "Health"
+        ],
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/api/v1/auth/google": {
+      "get": {
+        "operationId": "getApiV1AuthGoogle",
+        "summary": "Redirect to Google OAuth",
+        "description": "Redirects user to Google consent screen. This is the login entry point.",
+        "tags": [
+          "Auth"
+        ],
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/api/v1/auth/google/callback": {
+      "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "code",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "error",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "state",
+            "required": false
+          }
+        ],
+        "operationId": "getApiV1AuthGoogleCallback",
+        "summary": "Google OAuth Callback (Internal)",
+        "description": "Internal callback from Google. User is redirected here after authorizing. Then backend redirects to frontend with access token.",
+        "tags": [
+          "Auth"
+        ],
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "operationId": "getApiV1AuthMe",
+        "summary": "Get Current User Profile",
+        "tags": [
+          "Auth"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/api/v1/auth/onboard": {
+      "post": {
+        "parameters": [],
+        "operationId": "postApiV1AuthOnboard",
+        "summary": "Onboard User - Set Role and Profile",
+        "tags": [
+          "Auth"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "role": {
+                    "anyOf": [
+                      {
+                        "const": "GUEST",
+                        "type": "string"
+                      },
+                      {
+                        "const": "STUDENT",
+                        "type": "string"
+                      },
+                      {
+                        "const": "TEACHER",
+                        "type": "string"
+                      },
+                      {
+                        "const": "ADMIN",
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "school": {
+                    "type": "string"
+                  },
+                  "batch": {
+                    "type": "string"
+                  },
+                  "bio": {
+                    "type": "string"
+                  },
+                  "qualifications": {
+                    "type": "string"
+                  },
+                  "whatsappNumber": {
+                    "type": "string"
+                  },
+                  "telegramUser": {
+                    "type": "string"
+                  },
+                  "interests": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "subjects": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "role"
+                ]
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "role": {
+                    "anyOf": [
+                      {
+                        "const": "GUEST",
+                        "type": "string"
+                      },
+                      {
+                        "const": "STUDENT",
+                        "type": "string"
+                      },
+                      {
+                        "const": "TEACHER",
+                        "type": "string"
+                      },
+                      {
+                        "const": "ADMIN",
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "school": {
+                    "type": "string"
+                  },
+                  "batch": {
+                    "type": "string"
+                  },
+                  "bio": {
+                    "type": "string"
+                  },
+                  "qualifications": {
+                    "type": "string"
+                  },
+                  "whatsappNumber": {
+                    "type": "string"
+                  },
+                  "telegramUser": {
+                    "type": "string"
+                  },
+                  "interests": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "subjects": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "role"
+                ]
+              }
+            },
+            "text/plain": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "role": {
+                    "anyOf": [
+                      {
+                        "const": "GUEST",
+                        "type": "string"
+                      },
+                      {
+                        "const": "STUDENT",
+                        "type": "string"
+                      },
+                      {
+                        "const": "TEACHER",
+                        "type": "string"
+                      },
+                      {
+                        "const": "ADMIN",
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "school": {
+                    "type": "string"
+                  },
+                  "batch": {
+                    "type": "string"
+                  },
+                  "bio": {
+                    "type": "string"
+                  },
+                  "qualifications": {
+                    "type": "string"
+                  },
+                  "whatsappNumber": {
+                    "type": "string"
+                  },
+                  "telegramUser": {
+                    "type": "string"
+                  },
+                  "interests": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "subjects": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "role"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/api/v1/auth/users": {
+      "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "page",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false
+          }
+        ],
+        "operationId": "getApiV1AuthUsers",
+        "summary": "Get All Users (Admin Only)",
+        "description": "Paginated list of all users. Requires ADMIN role.",
+        "tags": [
+          "Auth"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/api/v1/auth/users/change-role": {
+      "post": {
+        "parameters": [],
+        "operationId": "postApiV1AuthUsersChange-role",
+        "summary": "Change User Role (Admin Only)",
+        "description": "Change a user's role. Requires ADMIN role.",
+        "tags": [
+          "Auth"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "userId": {
+                    "type": "string"
+                  },
+                  "role": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "userId",
+                  "role"
+                ]
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "userId": {
+                    "type": "string"
+                  },
+                  "role": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "userId",
+                  "role"
+                ]
+              }
+            },
+            "text/plain": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "userId": {
+                    "type": "string"
+                  },
+                  "role": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "userId",
+                  "role"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/api/v1/tags/": {
+      "get": {
+        "parameters": [
+          {
+            "schema": {
+              "anyOf": [
+                {
+                  "const": "SYSTEM",
+                  "type": "string"
+                },
+                {
+                  "const": "USER",
+                  "type": "string"
+                }
+              ]
+            },
+            "in": "query",
+            "name": "source",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "group",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "search",
+            "required": false
+          }
+        ],
+        "operationId": "getApiV1Tags",
+        "tags": [
+          "Tag"
+        ],
+        "responses": {
+          "200": {}
+        }
+      },
+      "post": {
+        "parameters": [],
+        "operationId": "postApiV1Tags",
+        "tags": [
+          "Tag"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "group": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name"
+                ]
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "group": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name"
+                ]
+              }
+            },
+            "text/plain": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "group": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/api/v1/tags/grouped": {
+      "get": {
+        "operationId": "getApiV1TagsGrouped",
+        "tags": [
+          "Tag"
+        ],
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/api/v1/tags/{id}": {
+      "get": {
+        "operationId": "getApiV1TagsById",
+        "tags": [
+          "Tag"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {}
+        }
+      },
+      "put": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "operationId": "putApiV1TagsById",
+        "tags": [
+          "Tag"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "group": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "group": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "text/plain": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "group": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {}
+        }
+      },
+      "delete": {
+        "operationId": "deleteApiV1TagsById",
+        "tags": [
+          "Tag"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/api/v1/resources/": {
+      "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "page",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "search",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "tagId",
+            "required": false
+          },
+          {
+            "schema": {
+              "anyOf": [
+                {
+                  "const": "PENDING",
+                  "type": "string"
+                },
+                {
+                  "const": "APPROVED",
+                  "type": "string"
+                },
+                {
+                  "const": "REJECTED",
+                  "type": "string"
+                },
+                {
+                  "const": "ARCHIVED",
+                  "type": "string"
+                }
+              ]
+            },
+            "in": "query",
+            "name": "status",
+            "required": false
+          }
+        ],
+        "operationId": "getApiV1Resources",
+        "tags": [
+          "Resource"
+        ],
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/api/v1/resources/{id}": {
+      "get": {
+        "operationId": "getApiV1ResourcesById",
+        "tags": [
+          "Resource"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/api/v1/resources/upload": {
+      "post": {
+        "parameters": [],
+        "operationId": "postApiV1ResourcesUpload",
+        "tags": [
+          "Resource"
+        ],
+        "summary": "Upload Resource (User)",
+        "description": "Upload a resource with hierarchy tags. Creates new tags if not exist (e.g. new Lesson).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "default": "File",
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "tags": {
+                    "description": "Comma-separated tag names (Legacy)",
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "stream": {
+                    "type": "string"
+                  },
+                  "subject": {
+                    "type": "string"
+                  },
+                  "grade": {
+                    "type": "string"
+                  },
+                  "medium": {
+                    "type": "string"
+                  },
+                  "resourceType": {
+                    "type": "string"
+                  },
+                  "lesson": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "default": "File",
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "tags": {
+                    "description": "Comma-separated tag names (Legacy)",
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "stream": {
+                    "type": "string"
+                  },
+                  "subject": {
+                    "type": "string"
+                  },
+                  "grade": {
+                    "type": "string"
+                  },
+                  "medium": {
+                    "type": "string"
+                  },
+                  "resourceType": {
+                    "type": "string"
+                  },
+                  "lesson": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            },
+            "text/plain": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "default": "File",
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "tags": {
+                    "description": "Comma-separated tag names (Legacy)",
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "stream": {
+                    "type": "string"
+                  },
+                  "subject": {
+                    "type": "string"
+                  },
+                  "grade": {
+                    "type": "string"
+                  },
+                  "medium": {
+                    "type": "string"
+                  },
+                  "resourceType": {
+                    "type": "string"
+                  },
+                  "lesson": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/api/v1/resources/{id}/stream": {
+      "get": {
+        "operationId": "getApiV1ResourcesByIdStream",
+        "tags": [
+          "Resource"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/api/v1/resources/library/hierarchy": {
+      "get": {
+        "operationId": "getApiV1ResourcesLibraryHierarchy",
+        "tags": [
+          "Resource"
+        ],
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/api/v1/resources/library/tags": {
+      "get": {
+        "operationId": "getApiV1ResourcesLibraryTags",
+        "tags": [
+          "Resource"
+        ],
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/api/v1/resources/admin/upload": {
+      "post": {
+        "parameters": [],
+        "operationId": "postApiV1ResourcesAdminUpload",
+        "tags": [
+          "Resource"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "default": "File",
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "tagIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "file",
+                  "tagIds"
+                ]
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "default": "File",
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "tagIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "file",
+                  "tagIds"
+                ]
+              }
+            },
+            "text/plain": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "default": "File",
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "tagIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "file",
+                  "tagIds"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/api/v1/library/": {
+      "get": {
+        "operationId": "getApiV1Library",
+        "summary": "Get Full Library Hierarchy",
+        "description": "Get the complete library folder structure with all SYSTEM resources organized by tags.",
+        "tags": [
+          "Library"
+        ],
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/api/v1/library/browse": {
+      "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "stream",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "subject",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "grade",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "medium",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "resourceType",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "lesson",
+            "required": false
+          },
+          {
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "numeric",
+                  "default": 0,
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            "in": "query",
+            "name": "page",
+            "required": false
+          },
+          {
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "numeric",
+                  "default": 0,
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false
+          }
+        ],
+        "operationId": "getApiV1LibraryBrowse",
+        "summary": "Browse Library (Drill-Down)",
+        "description": "Get 'Next Available Folders' and 'Resources' based on current tag filters.",
+        "tags": [
+          "Library"
+        ],
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/api/v1/library/hierarchy": {
+      "get": {
+        "operationId": "getApiV1LibraryHierarchy",
+        "summary": "Get Full Library Hierarchy",
+        "description": "Get the complete library folder structure with all SYSTEM resources organized by tags.",
+        "tags": [
+          "Library"
+        ],
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/api/v1/library/tags": {
+      "get": {
+        "operationId": "getApiV1LibraryTags",
+        "summary": "Get Available Library Tags",
+        "description": "Get all SYSTEM tags organized by group (Stream, Subject, Grade, Medium, ResourceType).",
+        "tags": [
+          "Library"
+        ],
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/api/v1/announcements/": {
+      "get": {
+        "operationId": "getApiV1Announcements",
+        "tags": [
+          "Announcement"
+        ],
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/api/v1/forum/": {
+      "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "page",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "search",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "category",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "solved",
+            "required": false
+          }
+        ],
+        "operationId": "getApiV1Forum",
+        "tags": [
+          "Forum"
+        ],
+        "responses": {
+          "200": {}
+        }
+      },
+      "post": {
+        "parameters": [],
+        "operationId": "postApiV1Forum",
+        "tags": [
+          "Forum"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "minLength": 5,
+                    "type": "string"
+                  },
+                  "content": {
+                    "minLength": 10,
+                    "type": "string"
+                  },
+                  "categoryTags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "title",
+                  "content"
+                ]
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "minLength": 5,
+                    "type": "string"
+                  },
+                  "content": {
+                    "minLength": 10,
+                    "type": "string"
+                  },
+                  "categoryTags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "title",
+                  "content"
+                ]
+              }
+            },
+            "text/plain": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "minLength": 5,
+                    "type": "string"
+                  },
+                  "content": {
+                    "minLength": 10,
+                    "type": "string"
+                  },
+                  "categoryTags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "title",
+                  "content"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/api/v1/forum/{id}": {
+      "get": {
+        "operationId": "getApiV1ForumById",
+        "tags": [
+          "Forum"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/api/v1/forum/{id}/answers": {
+      "post": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "operationId": "postApiV1ForumByIdAnswers",
+        "tags": [
+          "Answer"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "content": {
+                    "minLength": 10,
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "content"
+                ]
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "content": {
+                    "minLength": 10,
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "content"
+                ]
+              }
+            },
+            "text/plain": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "content": {
+                    "minLength": 10,
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "content"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/api/v1/forum/{id}/answers/{answerId}/accept": {
+      "patch": {
+        "operationId": "patchApiV1ForumByIdAnswersByAnswerIdAccept",
+        "tags": [
+          "Answer"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "answerId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/api/v1/forum/answers/{id}/vote": {
+      "post": {
+        "operationId": "postApiV1ForumAnswersByIdVote",
+        "tags": [
+          "Answer"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/api/v1/teachers/": {
+      "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "page",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "subject",
+            "required": false
+          }
+        ],
+        "operationId": "getApiV1Teachers",
+        "tags": [
+          "Teacher"
+        ],
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/api/v1/teachers/{id}": {
+      "get": {
+        "operationId": "getApiV1TeachersById",
+        "tags": [
+          "Teacher"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/api/v1/teachers/subject/{slug}": {
+      "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "slug",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "page",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false
+          }
+        ],
+        "operationId": "getApiV1TeachersSubjectBySlug",
+        "tags": [
+          "Teacher"
+        ],
+        "responses": {
+          "200": {}
+        }
+      }
+    }
+  }
+}

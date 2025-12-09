@@ -39,6 +39,8 @@ interface DocumentTag {
   id: string;
   name: string;
   group: string;
+  slug?: string;
+  source?: 'SYSTEM' | 'USER';
 }
 
 interface Resource {
@@ -51,6 +53,13 @@ interface Resource {
   downloads: number;
   tags: DocumentTag[];
   createdAt?: string;
+  fileSize?: string;
+  source?: 'SYSTEM' | 'USER';
+  uploader?: {
+    id: string;
+    name: string;
+    role: string;
+  };
 }
 
 interface GroupedTags {
@@ -76,10 +85,10 @@ function useDebounce<T>(value: T, delay: number): T {
 
 // Resource Card Component
 function ResourceCard({ resource }: { resource: Resource }) {
-  const subject = resource.tags.find(t => t.group === 'Subject')?.name;
-  const grade = resource.tags.find(t => t.group === 'Grade')?.name;
-  const medium = resource.tags.find(t => t.group === 'Medium')?.name;
-  const resourceType = resource.tags.find(t => t.group === 'ResourceType')?.name;
+  const subject = resource.tags.find(t => t.group === 'SUBJECT' || t.group === 'Subject')?.name;
+  const grade = resource.tags.find(t => t.group === 'GRADE' || t.group === 'Grade')?.name;
+  const medium = resource.tags.find(t => t.group === 'MEDIUM' || t.group === 'Medium')?.name;
+  const resourceType = resource.tags.find(t => t.group === 'RESOURCE_TYPE' || t.group === 'ResourceType')?.name;
 
   return (
     <Card className="group flex flex-col overflow-hidden card-hover border-border/50 hover:border-primary/30 bg-card h-full">
@@ -175,10 +184,11 @@ function FilterContent({
   onFilterChange: (group: string, tagId: string, checked: boolean) => void;
   onReset: () => void;
 }) {
-  const grades = groupedTags['Grade'] || [];
-  const subjects = groupedTags['Subject'] || [];
-  const mediums = groupedTags['Medium'] || [];
-  const resourceTypes = groupedTags['ResourceType'] || [];
+  // Support both UPPERCASE and lowercase group names for API compatibility
+  const grades = groupedTags['GRADE'] || groupedTags['Grade'] || [];
+  const subjects = groupedTags['SUBJECT'] || groupedTags['Subject'] || [];
+  const mediums = groupedTags['MEDIUM'] || groupedTags['Medium'] || [];
+  const resourceTypes = groupedTags['RESOURCE_TYPE'] || groupedTags['ResourceType'] || [];
 
   return (
     <div className="space-y-6">
@@ -418,7 +428,7 @@ export default function SearchPage() {
               placeholder="Search for subjects, past papers, notes..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-14 pl-12 pr-4 bg-zinc-900/50 border-zinc-800 text-white placeholder:text-zinc-500 rounded-xl focus-visible:ring-red-500 focus-visible:border-red-500 text-base"
+              className="w-full h-14 pl-12 pr-12 bg-zinc-900/50 border-zinc-800 text-white placeholder:text-zinc-500 rounded-xl focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-zinc-600 text-base [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden"
             />
             {searchQuery && (
               <Button
