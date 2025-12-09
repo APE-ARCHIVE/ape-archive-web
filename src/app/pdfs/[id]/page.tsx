@@ -1,32 +1,20 @@
 'use client';
 
-import { useEffect, useState, use, useCallback, useRef } from 'react';
+import { useEffect, useState, use, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import dynamic from 'next/dynamic';
 import { Button } from '@/components/ui/button';
 import {
   Download, Share, Calendar, Book, GraduationCap, Languages, Tag, FileText,
-  ArrowLeft, Loader2, AlertCircle, Eye, Copy, Check, ZoomIn, ZoomOut,
-  ChevronLeft, ChevronRight, Maximize2, RotateCw, X
+  ArrowLeft, Loader2, AlertCircle, Eye, Copy, Check, ExternalLink
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Slider } from '@/components/ui/slider';
 import { Progress } from '@/components/ui/progress';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
-
-// Dynamic import for react-pdf to avoid SSR issues with DOMMatrix
-const Document = dynamic(() => import('react-pdf').then(mod => mod.Document), { ssr: false });
-const Page = dynamic(() => import('react-pdf').then(mod => mod.Page), { ssr: false });
-
-// Import react-pdf styles
-import 'react-pdf/dist/Page/AnnotationLayer.css';
-import 'react-pdf/dist/Page/TextLayer.css';
 
 // Types
 interface DocumentTag {
@@ -56,150 +44,48 @@ interface Resource {
   };
 }
 
-// PDF Viewer Component
-function PDFViewer({ resourceId, title }: { resourceId: string; title: string }) {
-  const [numPages, setNumPages] = useState<number>(0);
-  const [pageNumber, setPageNumber] = useState(1);
-  const [scale, setScale] = useState(1.0);
-  const [rotation, setRotation] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [containerWidth, setContainerWidth] = useState<number>(0);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  // Configure PDF.js worker (client-side only)
-  useEffect(() => {
-    import('react-pdf').then(({ pdfjs }) => {
-      pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
-    });
-  }, []);
-
-  // Track container width for responsive PDF rendering
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const updateWidth = () => {
-      setContainerWidth(container.clientWidth - 32); // Subtract padding
-    };
-
-    updateWidth();
-    const resizeObserver = new ResizeObserver(updateWidth);
-    resizeObserver.observe(container);
-
-    return () => resizeObserver.disconnect();
-  }, []);
-
-  // Use the stream API endpoint
+// Simple PDF Preview Component - Direct links to view/download
+function PDFViewer({ resourceId, title, fileSize }: { resourceId: string; title: string; fileSize?: string }) {
   const pdfUrl = `${process.env.NEXT_PUBLIC_API_URL || 'https://server.apearchive.lk'}/api/v1/resources/${resourceId}/stream`;
 
-  const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
-    setNumPages(numPages);
-    setIsLoading(false);
+  const handleView = () => {
+    window.open(pdfUrl, '_blank');
   };
-
-  const onDocumentLoadError = (err: Error) => {
-    console.error('PDF load error:', err);
-    setError('Failed to load PDF');
-    setIsLoading(false);
-  };
-
-  const goToPrevPage = () => setPageNumber(prev => Math.max(prev - 1, 1));
-  const goToNextPage = () => setPageNumber(prev => Math.min(prev + 1, numPages));
-  const zoomIn = () => setScale(prev => Math.min(prev + 0.25, 3));
-  const zoomOut = () => setScale(prev => Math.max(prev - 0.25, 0.5));
-  const rotate = () => setRotation(prev => (prev + 90) % 360);
-  const resetZoom = () => setScale(1.0);
 
   return (
-    <div className="flex flex-col h-full">
-      {/* PDF Toolbar */}
-      <div className="flex items-center justify-center gap-2 sm:gap-4 p-2 sm:p-3 bg-muted/50 border-b rounded-t-lg flex-wrap">
-        {/* Page Navigation */}
-        <div className="flex items-center gap-1 sm:gap-2">
-          <Button variant="outline" size="icon" className="h-8 w-8 sm:h-9 sm:w-9" onClick={goToPrevPage} disabled={pageNumber <= 1}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <span className="text-xs sm:text-sm min-w-[60px] sm:min-w-[80px] text-center font-medium">
-            {pageNumber} / {numPages || '?'}
-          </span>
-          <Button variant="outline" size="icon" className="h-8 w-8 sm:h-9 sm:w-9" onClick={goToNextPage} disabled={pageNumber >= numPages}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-
-        {/* Divider - hidden on mobile */}
-        <div className="hidden sm:block w-px h-6 bg-border" />
-
-        {/* Zoom Controls */}
-        <div className="flex items-center gap-1 sm:gap-2">
-          <Button variant="outline" size="icon" className="h-8 w-8 sm:h-9 sm:w-9" onClick={zoomOut} disabled={scale <= 0.5}>
-            <ZoomOut className="h-4 w-4" />
-          </Button>
-          <span className="text-xs sm:text-sm min-w-[40px] sm:min-w-[50px] text-center font-medium">{Math.round(scale * 100)}%</span>
-          <Button variant="outline" size="icon" className="h-8 w-8 sm:h-9 sm:w-9" onClick={zoomIn} disabled={scale >= 3}>
-            <ZoomIn className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" size="icon" className="h-8 w-8 sm:h-9 sm:w-9" onClick={rotate}>
-            <RotateCw className="h-4 w-4" />
-          </Button>
-        </div>
+    <div className="flex flex-col items-center justify-center p-8 sm:p-12 bg-muted/30 rounded-lg min-h-[300px] sm:min-h-[400px]">
+      {/* PDF Icon */}
+      <div className="w-24 h-24 sm:w-32 sm:h-32 mb-6 flex items-center justify-center bg-primary/10 rounded-2xl">
+        <FileText className="w-12 h-12 sm:w-16 sm:h-16 text-primary" />
       </div>
 
-      {/* PDF Content */}
-      <div ref={containerRef} className="flex-1 overflow-auto bg-muted/30 flex items-start justify-center p-4 min-h-[500px]">
-        {isLoading && (
-          <div className="flex flex-col items-center justify-center py-16 gap-4">
-            <Loader2 className="h-12 w-12 animate-spin text-primary" />
-            <p className="text-muted-foreground">Loading PDF...</p>
-          </div>
-        )}
+      {/* Title */}
+      <h3 className="text-lg sm:text-xl font-semibold text-center mb-2 max-w-md line-clamp-2">
+        {title}
+      </h3>
 
-        {error && (
-          <div className="flex flex-col items-center justify-center py-16 gap-4 text-center">
-            <AlertCircle className="h-12 w-12 text-destructive" />
-            <p className="text-muted-foreground">{error}</p>
-          </div>
-        )}
-
-        <Document
-          file={pdfUrl}
-          onLoadSuccess={onDocumentLoadSuccess}
-          onLoadError={onDocumentLoadError}
-          loading={null}
-          className={cn(isLoading && 'hidden')}
-        >
-          <Page
-            pageNumber={pageNumber}
-            scale={scale}
-            rotate={rotation}
-            className="shadow-lg max-w-full"
-            renderTextLayer={true}
-            renderAnnotationLayer={true}
-            width={containerWidth > 0 && scale === 1.0 ? Math.min(containerWidth, 800) : undefined}
-          />
-        </Document>
-      </div>
-
-      {/* Page slider for quick navigation */}
-      {numPages > 1 && (
-        <div className="p-2 sm:p-3 bg-muted/50 border-t rounded-b-lg">
-          <div className="flex items-center gap-2 sm:gap-4">
-            <span className="text-xs text-muted-foreground">Page</span>
-            <Slider
-              value={[pageNumber]}
-              min={1}
-              max={numPages}
-              step={1}
-              onValueChange={([value]) => setPageNumber(value)}
-              className="flex-1"
-            />
-          </div>
-        </div>
+      {/* File info */}
+      {fileSize && (
+        <p className="text-sm text-muted-foreground mb-6">
+          PDF Document • {fileSize}
+        </p>
       )}
+
+      {/* Action Buttons */}
+      <div className="flex flex-col sm:flex-row gap-3 w-full max-w-xs">
+        <Button onClick={handleView} className="flex-1 gap-2" size="lg">
+          <Eye className="h-5 w-5" />
+          View PDF
+        </Button>
+      </div>
+
+      <p className="text-xs text-muted-foreground mt-6 text-center">
+        Click "View PDF" to open in your browser's PDF viewer
+      </p>
     </div>
   );
 }
+
 
 export default function PdfDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -406,7 +292,7 @@ export default function PdfDetailPage({ params }: { params: Promise<{ id: string
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <PDFViewer resourceId={id} title={resource.title} />
+              <PDFViewer resourceId={id} title={resource.title} fileSize={formatFileSize(resource.fileSize) || undefined} />
             </CardContent>
           </Card>
         </main>
