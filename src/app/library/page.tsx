@@ -48,18 +48,33 @@ interface Resource {
   uploader?: { id: string; name: string; role: string };
 }
 
+// Folder item returned by browse API
+interface BrowseFolder {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+// Browse API response structure
 interface BrowseResponse {
-  nextFolders?: { group: string; options: { name: string; slug: string; count: number }[] };
+  currentLevel?: string;
+  folders?: Record<string, BrowseFolder[]>; // e.g., { "LEVEL": [...], "STREAM": [...] }
   resources?: Resource[];
   meta?: { total: number; page: number; limit: number; totalPages: number };
 }
 
-type HierarchyLevel = {
-  [key: string]: HierarchyLevel | Resource[];
-};
+// New hierarchy node structure from API
+interface HierarchyNode {
+  id: string;
+  name: string;
+  slug: string;
+  group: string;
+  children: HierarchyNode[];
+}
 
 // Filter state type
 interface Filters {
+  level?: string;
   stream?: string;
   subject?: string;
   grade?: string;
@@ -145,14 +160,30 @@ function ResourceCard({ resource }: { resource: Resource }) {
   );
 }
 
+// Map API group key to URL filter key
+function groupKeyToFilterKey(groupKey: string): keyof Filters | null {
+  switch (groupKey.toUpperCase()) {
+    case 'LEVEL': return 'level';
+    case 'STREAM': return 'stream';
+    case 'SUBJECT': return 'subject';
+    case 'GRADE': return 'grade';
+    case 'MEDIUM': return 'medium';
+    case 'RESOURCE_TYPE': return 'resourceType';
+    case 'LESSON': return 'lesson';
+    default: return null;
+  }
+}
+
 // Folder Card for navigation
-function FolderCard({ name, slug, count, filterKey, currentFilters }: {
+function FolderCard({ name, slug, groupKey, currentFilters }: {
   name: string;
   slug: string;
-  count: number;
-  filterKey: string;
+  groupKey: string;
   currentFilters: Filters;
 }) {
+  const filterKey = groupKeyToFilterKey(groupKey);
+  if (!filterKey) return null;
+
   const newFilters = { ...currentFilters, [filterKey]: slug };
   const queryString = new URLSearchParams(
     Object.entries(newFilters).filter(([_, v]) => v) as [string, string][]
@@ -171,7 +202,7 @@ function FolderCard({ name, slug, count, filterKey, currentFilters }: {
                 {name}
               </h3>
               <p className="text-xs text-muted-foreground mt-1">
-                {count} {count === 1 ? 'item' : 'items'}
+                Click to browse
               </p>
             </div>
             <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
@@ -204,47 +235,113 @@ function ActiveFilters({ filters, onClear }: { filters: Filters; onClear: (key: 
   );
 }
 
-// Sidebar hierarchy tree node
-function TreeNode({ name, data, basePath, level = 0 }: {
-  name: string;
-  data: HierarchyLevel | Resource[];
-  basePath: string;
+// Sidebar hierarchy tree node - updated for new API structure
+// Clicking a folder updates URL params to filter the browse API
+// parentFilters accumulates all filters from parent nodes in the hierarchy
+function TreeNode({ node, level = 0, parentFilters = {}, urlFilters }: {
+  node: HierarchyNode;
   level?: number;
+  parentFilters?: Filters;
+  urlFilters: Filters;
 }) {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(level < 1);
-  const slug = toSlug(name);
-  const isResourceArray = Array.isArray(data) && data.length > 0 && 'id' in data[0];
+  const hasChildren = node.children && node.children.length > 0;
 
-  if (isResourceArray) {
-    return (
-      <div
-        className="flex items-center gap-2 w-full px-2 py-1.5 text-sm rounded-md text-muted-foreground"
-        style={{ paddingLeft: `${(level * 12) + 8}px` }}
-      >
-        <FileText className="h-4 w-4 shrink-0" />
-        <span className="truncate">{name}</span>
-        <Badge variant="secondary" className="ml-auto text-xs">{data.length}</Badge>
-      </div>
-    );
-  }
+  // Map group type to filter key
+  const getFilterKey = (group: string): keyof Filters | null => {
+    switch (group) {
+      case 'LEVEL': return 'level';
+      case 'STREAM': return 'stream';
+      case 'SUBJECT': return 'subject';
+      case 'GRADE': return 'grade';
+      case 'MEDIUM': return 'medium';
+      case 'RESOURCE_TYPE': return 'resourceType';
+      case 'LESSON': return 'lesson';
+      default: return null;
+    }
+  };
 
-  const entries = Object.entries(data as HierarchyLevel);
+  // Get filter key for this node
+  const filterKey = getFilterKey(node.group);
+
+  // Build complete filters including this node
+  const currentFilters: Filters = filterKey
+    ? { ...parentFilters, [filterKey]: node.slug }
+    : parentFilters;
+
+  // Handle folder click - navigate to filtered view with accumulated path
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    if (!filterKey) return;
+
+    // Build query string from accumulated filters
+    const params = new URLSearchParams();
+    Object.entries(currentFilters).forEach(([key, value]) => {
+      if (value) params.set(key, value);
+    });
+
+    router.push(`/library?${params.toString()}`);
+  };
+
+  // Toggle expand/collapse for folders with children
+  const handleToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsOpen(!isOpen);
+  };
+
+  // Check if this node is currently active/selected
+  const isActive = filterKey && urlFilters[filterKey] === node.slug;
 
   return (
     <div>
       <div
-        className="flex items-center gap-1 w-full px-2 py-1.5 text-sm rounded-md transition-colors hover:bg-muted cursor-pointer"
+        className={cn(
+          "flex items-center gap-1 w-full px-2 py-1.5 text-sm rounded-md transition-colors cursor-pointer group",
+          isActive ? "bg-primary/20 text-primary" : "hover:bg-muted"
+        )}
         style={{ paddingLeft: `${(level * 12) + 8}px` }}
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={handleClick}
       >
-        <button className="p-0.5 shrink-0">
-          {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-        </button>
-        {isOpen ? <FolderOpen className="h-4 w-4 shrink-0" /> : <Folder className="h-4 w-4 shrink-0" />}
-        <span className="truncate ml-1">{name}</span>
+        {/* Expand/collapse button for items with children */}
+        {hasChildren ? (
+          <button
+            className="p-0.5 shrink-0 hover:bg-muted rounded"
+            onClick={handleToggle}
+          >
+            {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+          </button>
+        ) : (
+          <span className="w-5" /> // Spacer for alignment
+        )}
+
+        {/* Folder icon */}
+        {isOpen && hasChildren ? (
+          <FolderOpen className="h-4 w-4 shrink-0 text-primary" />
+        ) : (
+          <Folder className="h-4 w-4 shrink-0" />
+        )}
+
+        <span className="truncate ml-1 flex-1">{node.name}</span>
+
+        {/* Show count for items with children */}
+        {hasChildren && (
+          <Badge variant="secondary" className="ml-auto text-[10px] px-1.5 py-0 opacity-60 group-hover:opacity-100">
+            {node.children.length}
+          </Badge>
+        )}
       </div>
-      {isOpen && entries.map(([key, value]) => (
-        <TreeNode key={key} name={key} data={value} basePath={`${basePath}/${slug}`} level={level + 1} />
+
+      {/* Render children with accumulated filters */}
+      {isOpen && hasChildren && node.children.map((child) => (
+        <TreeNode
+          key={child.id}
+          node={child}
+          level={level + 1}
+          parentFilters={currentFilters}
+          urlFilters={urlFilters}
+        />
       ))}
     </div>
   );
@@ -282,6 +379,7 @@ function LibraryContent() {
 
   // Parse filters from URL
   const filters: Filters = {
+    level: searchParams.get('level') || undefined,
     stream: searchParams.get('stream') || undefined,
     subject: searchParams.get('subject') || undefined,
     grade: searchParams.get('grade') || undefined,
@@ -291,7 +389,7 @@ function LibraryContent() {
   };
 
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-  const [hierarchy, setHierarchy] = useState<HierarchyLevel | null>(null);
+  const [hierarchy, setHierarchy] = useState<HierarchyNode[] | null>(null);
   const [browseData, setBrowseData] = useState<BrowseResponse | null>(null);
   const [resources, setResources] = useState<Resource[]>([]);
   const [isLoadingHierarchy, setIsLoadingHierarchy] = useState(true);
@@ -323,6 +421,7 @@ function LibraryContent() {
     setError(null);
     try {
       const params = new URLSearchParams();
+      if (filters.level) params.set('level', filters.level);
       if (filters.stream) params.set('stream', filters.stream);
       if (filters.subject) params.set('subject', filters.subject);
       if (filters.grade) params.set('grade', filters.grade);
@@ -356,7 +455,7 @@ function LibraryContent() {
     } finally {
       setIsLoadingBrowse(false);
     }
-  }, [filters.stream, filters.subject, filters.grade, filters.medium, filters.resourceType, filters.lesson, page]);
+  }, [filters.level, filters.stream, filters.subject, filters.grade, filters.medium, filters.resourceType, filters.lesson, page]);
 
   useEffect(() => {
     fetchBrowse();
@@ -377,8 +476,6 @@ function LibraryContent() {
     .filter(([_, v]) => v)
     .map(([key, value]) => ({ key, value: value!.replace(/-/g, ' ') }));
 
-  const gradeKeys = hierarchy ? Object.keys(hierarchy) : [];
-
   const SidebarContent = () => (
     <div className="space-y-2">
       <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
@@ -387,19 +484,24 @@ function LibraryContent() {
       </h2>
       {isLoadingHierarchy ? (
         <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>
-      ) : hierarchy ? (
+      ) : hierarchy && hierarchy.length > 0 ? (
         <ScrollArea className="h-[calc(100vh-16rem)]">
-          {gradeKeys.map((key) => (
-            <TreeNode key={key} name={key} data={hierarchy[key]} basePath="/library" />
+          {hierarchy.map((node) => (
+            <TreeNode key={node.id} node={node} urlFilters={filters} />
           ))}
         </ScrollArea>
-      ) : null}
+      ) : (
+        <p className="text-sm text-muted-foreground text-center py-4">No categories available</p>
+      )}
     </div>
   );
 
   // Determine what to show in main content
   const hasActiveFilters = Object.values(filters).some(v => v);
-  const nextFolders = browseData?.nextFolders;
+  const folders = browseData?.folders;
+
+  // Get all folder groups that have items
+  const folderGroups = folders ? Object.entries(folders).filter(([_, items]) => items && items.length > 0) : [];
 
   return (
     <div className="flex flex-col w-full min-h-screen py-8">
@@ -453,24 +555,26 @@ function LibraryContent() {
             <ErrorState message={error} onRetry={fetchBrowse} />
           ) : (
             <>
-              {/* Next folders if available */}
-              {nextFolders && nextFolders.options && nextFolders.options.length > 0 && (
-                <div className="mb-8">
-                  <h2 className="text-lg font-semibold mb-4">Select {nextFolders.group}</h2>
+              {/* Folders from browse API */}
+              {folderGroups.map(([groupKey, groupFolders]) => (
+                <div key={groupKey} className="mb-8">
+                  <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <Folder className="h-5 w-5 text-primary" />
+                    Select {groupKey.charAt(0) + groupKey.slice(1).toLowerCase().replace(/_/g, ' ')}
+                  </h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {nextFolders.options.map((opt) => (
+                    {groupFolders.map((folder) => (
                       <FolderCard
-                        key={opt.slug}
-                        name={opt.name}
-                        slug={opt.slug}
-                        count={opt.count}
-                        filterKey={nextFolders.group.toLowerCase()}
+                        key={folder.id}
+                        name={folder.name}
+                        slug={folder.slug}
+                        groupKey={groupKey}
                         currentFilters={filters}
                       />
                     ))}
                   </div>
                 </div>
-              )}
+              ))}
 
               {/* Resources */}
               <div className="mb-4 text-sm text-muted-foreground">
@@ -483,7 +587,7 @@ function LibraryContent() {
                     <ResourceCard key={resource.id} resource={resource} />
                   ))}
                 </div>
-              ) : !nextFolders?.options?.length ? (
+              ) : folderGroups.length === 0 && resources.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
                   <FileText className="h-16 w-16 text-muted-foreground mb-4" />
                   <h3 className="text-lg font-semibold mb-2">No resources found</h3>

@@ -98,11 +98,11 @@ export function Footer() {
             </div>
             <div className="pt-2">
               <Link
-                href="mailto:contact@apearchive.com"
+                href="mailto:contact@apearchive.lk"
                 className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
               >
                 <Mail className="h-4 w-4" />
-                contact@apearchive.com
+                contact@apearchive.lk
               </Link>
             </div>
           </div>
