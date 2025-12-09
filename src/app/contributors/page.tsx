@@ -56,35 +56,35 @@ export default function ContributorsPage() {
 
 
             {/* River Flowing Bubbles Section */}
-            <div className="relative container max-w-4xl w-full overflow-hidden py-8">
+            <div className="relative w-full overflow-hidden py-4 sm:py-8">
                 {/* Left fade gradient */}
-                <div className="absolute left-0 top-0 bottom-0 w-24 md:w-32 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
+                <div className="absolute left-0 top-0 bottom-0 w-12 sm:w-24 md:w-32 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
                 {/* Right fade gradient */}
-                <div className="absolute right-0 top-0 bottom-0 w-24 md:w-32 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
+                <div className="absolute right-0 top-0 bottom-0 w-12 sm:w-24 md:w-32 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
 
                 {/* Row 1 - flows right to left */}
-                <div className="flex mb-8 animate-marquee-slow">
-                    <div className="flex gap-8 pr-8">
+                <div className="flex mb-4 sm:mb-6 md:mb-8 animate-marquee-slow">
+                    <div className="flex gap-4 sm:gap-6 md:gap-8 pr-4 sm:pr-6 md:pr-8">
                         {[...row1, ...row1, ...row1, ...row1].map((contributor, index) => (
-                            <BubbleCard key={`r1-${index}`} contributor={contributor} size="medium" index={index} />
+                            <BubbleCard key={`r1-${index}`} contributor={contributor} index={index} />
                         ))}
                     </div>
                 </div>
 
                 {/* Row 2 - flows right to left (faster) */}
-                <div className="flex mb-8 animate-marquee-fast">
-                    <div className="flex gap-6 pr-6">
+                <div className="flex mb-4 sm:mb-6 md:mb-8 animate-marquee-fast">
+                    <div className="flex gap-4 sm:gap-5 md:gap-6 pr-4 sm:pr-5 md:pr-6">
                         {[...row2, ...row2, ...row2, ...row2].map((contributor, index) => (
-                            <BubbleCard key={`r2-${index}`} contributor={contributor} size="medium" index={index} />
+                            <BubbleCard key={`r2-${index}`} contributor={contributor} index={index} />
                         ))}
                     </div>
                 </div>
 
                 {/* Row 3 - flows right to left (medium speed) */}
                 <div className="flex animate-marquee-medium">
-                    <div className="flex gap-10 pr-10">
+                    <div className="flex gap-5 sm:gap-7 md:gap-10 pr-5 sm:pr-7 md:pr-10">
                         {[...row3, ...row3, ...row3, ...row3].map((contributor, index) => (
-                            <BubbleCard key={`r3-${index}`} contributor={contributor} size="medium" index={index} />
+                            <BubbleCard key={`r3-${index}`} contributor={contributor} index={index} />
                         ))}
                     </div>
                 </div>
@@ -93,13 +93,7 @@ export default function ContributorsPage() {
     );
 }
 
-function BubbleCard({ contributor, size, index = 0 }: { contributor: { name: string; githubProfile: string }; size: 'small' | 'medium' | 'large'; index?: number }) {
-    const sizeClasses = {
-        small: 'w-16 h-16 text-lg',
-        medium: 'w-20 h-20 text-xl',
-        large: 'w-24 h-24 text-2xl',
-    };
-
+function BubbleCard({ contributor, index = 0 }: { contributor: { name: string; githubProfile: string }; index?: number }) {
     // Different animation delays for natural look
     const delays = ['0s', '0.5s', '1s', '1.5s', '2s'];
     const delay = delays[index % delays.length];
@@ -108,11 +102,11 @@ function BubbleCard({ contributor, size, index = 0 }: { contributor: { name: str
         <Link
             href={contributor.githubProfile}
             target="_blank"
-            className="group flex flex-col items-center gap-2 flex-shrink-0"
+            className="group flex flex-col items-center gap-1 sm:gap-2 flex-shrink-0"
         >
             <div
-                className={`
-                    ${sizeClasses[size]}
+                className="
+                    w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20
                     rounded-full 
                     bg-gradient-to-br from-card via-card to-primary/20
                     border-2 border-border/50
@@ -125,7 +119,7 @@ function BubbleCard({ contributor, size, index = 0 }: { contributor: { name: str
                     group-hover:shadow-primary/30
                     animate-bubble
                     relative overflow-hidden
-                `}
+                "
                 style={{ animationDelay: delay }}
             >
                 <Image
@@ -135,10 +129,9 @@ function BubbleCard({ contributor, size, index = 0 }: { contributor: { name: str
                     className="object-cover"
                 />
             </div>
-            <span className="text-xs text-muted-foreground group-hover:text-primary transition-colors whitespace-nowrap">
+            <span className="text-[10px] sm:text-xs text-muted-foreground group-hover:text-primary transition-colors whitespace-nowrap max-w-[60px] sm:max-w-[80px] md:max-w-none truncate text-center">
                 {contributor.name}
             </span>
         </Link>
     );
 }
-

@@ -11,25 +11,99 @@ import { QueryProvider } from '@/components/query-provider';
 import { AuthProvider } from '@/lib/auth-context';
 import { BugReportButton } from '@/components/shared/bug-report-button';
 
+const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://apearchive.lk';
+
 export const metadata: Metadata = {
-  title: 'APE ARCHIVE',
-  description: 'Access and share study materials online during emergencies and anytime you need.',
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: 'APE ARCHIVE - Free A/L Study Materials for Sri Lankan Students',
+    template: '%s | APE ARCHIVE',
+  },
+  description: 'Access free A/L study materials, past papers, notes, and educational resources for Sri Lankan students. Download syllabus, teacher guides, and textbooks for Science, Commerce, Arts, and Technology streams.',
+  keywords: [
+    'A/L study materials',
+    'Sri Lanka A/L',
+    'Advanced Level',
+    'past papers',
+    'study notes',
+    'syllabus',
+    'teacher guide',
+    'textbooks',
+    'free education',
+    'Sri Lankan students',
+    'Science stream',
+    'Commerce stream',
+    'Arts stream',
+    'Technology stream',
+    'Physics',
+    'Chemistry',
+    'Biology',
+    'Combined Maths',
+    'Economics',
+    'Accounting',
+    'ICT',
+    'APE Archive',
+  ],
+  authors: [{ name: 'APE ARCHIVE Team', url: siteUrl }],
+  creator: 'APE ARCHIVE',
+  publisher: 'APE ARCHIVE',
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  icons: {
+    icon: [
+      { url: '/favicon.ico' },
+      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
+  },
+  manifest: '/site.webmanifest',
   openGraph: {
-    title: 'APE ARCHIVE',
-    description: 'Access and share study materials online during emergencies and anytime you need.',
-    url: process.env.NEXT_PUBLIC_APP_URL,
+    type: 'website',
+    locale: 'en_US',
+    url: siteUrl,
     siteName: 'APE ARCHIVE',
+    title: 'APE ARCHIVE - Free A/L Study Materials for Sri Lankan Students',
+    description: 'Access free A/L study materials, past papers, notes, and educational resources for Sri Lankan students.',
     images: [
       {
-        url: `${process.env.NEXT_PUBLIC_APP_URL}/logo/open-graph.png`,
+        url: '/logo/open-graph.png',
         width: 1200,
         height: 630,
-        alt: 'APE ARCHIVE',
+        alt: 'APE ARCHIVE - Free Educational Resources',
       },
     ],
-    locale: 'en_US',
-    type: 'website',
   },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'APE ARCHIVE - Free A/L Study Materials',
+    description: 'Access free A/L study materials, past papers, notes, and educational resources for Sri Lankan students.',
+    images: ['/logo/open-graph.png'],
+    creator: '@apearchive',
+  },
+  verification: {
+    google: process.env.GOOGLE_SITE_VERIFICATION,
+  },
+  alternates: {
+    canonical: siteUrl,
+    languages: {
+      'en-US': siteUrl,
+      'si-LK': `${siteUrl}/si`,
+      'ta-LK': `${siteUrl}/ta`,
+    },
+  },
+  category: 'education',
 };
 
 export default function RootLayout({
@@ -64,9 +138,8 @@ export default function RootLayout({
       [background-image:linear-gradient(0deg,transparent_49%,hsl(var(--border))_49%,hsl(var(--border))_51%,transparent_51%),linear-gradient(90deg,transparent_49%,hsl(var(--border))_49%,hsl(var(--border))_51%,transparent_51%)]
       [background-size:40px_40px]"
                   ></div>
-
                   <Header />
-                  <div className="relative z-10 flex min-h-screen max-w-7xl w-full px-4 mx-auto flex-col justify-center items-center">
+                  <div className="relative z-10 flex min-h-screen max-w-7xl w-full px-4 mx-auto flex-col overflow-x-hidden">
                     {children}
                   </div>
                   <div className="relative z-50">

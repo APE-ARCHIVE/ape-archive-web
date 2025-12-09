@@ -30,8 +30,11 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Progress } from '@/components/ui/progress';
 import { BubbleBackground } from '@/components/ui/shadcn-io/bubble-background';
 import { apiClient } from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
 // Types for API response
@@ -85,90 +88,166 @@ function useDebounce<T>(value: T, delay: number): T {
 
 // Resource Card Component
 function ResourceCard({ resource }: { resource: Resource }) {
+  const { toast } = useToast();
   const subject = resource.tags.find(t => t.group === 'SUBJECT' || t.group === 'Subject')?.name;
   const grade = resource.tags.find(t => t.group === 'GRADE' || t.group === 'Grade')?.name;
   const medium = resource.tags.find(t => t.group === 'MEDIUM' || t.group === 'Medium')?.name;
   const resourceType = resource.tags.find(t => t.group === 'RESOURCE_TYPE' || t.group === 'ResourceType')?.name;
 
+  // Download state
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState(0);
+  const [downloadedBytes, setDownloadedBytes] = useState(0);
+  const [totalBytes, setTotalBytes] = useState(0);
+
+  const streamUrl = `${process.env.NEXT_PUBLIC_API_URL || 'https://server.apearchive.lk'}/api/v1/resources/${resource.id}/stream`;
+
+  const handleDownload = async () => {
+    if (isDownloading) return;
+    setIsDownloading(true);
+    setDownloadProgress(0);
+    setDownloadedBytes(0);
+    setTotalBytes(0);
+
+    try {
+      const response = await fetch(streamUrl, { method: 'GET', credentials: 'include', mode: 'cors' });
+      if (!response.ok) throw new Error('Download failed');
+
+      const contentLength = response.headers.get('content-length');
+      const total = contentLength ? parseInt(contentLength, 10) : 0;
+      setTotalBytes(total);
+
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('Unable to read');
+
+      const chunks: Uint8Array[] = [];
+      let receivedLength = 0;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        chunks.push(value);
+        receivedLength += value.length;
+        setDownloadedBytes(receivedLength);
+        if (total > 0) setDownloadProgress(Math.round((receivedLength / total) * 100));
+      }
+
+      const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0);
+      const combined = new Uint8Array(totalLength);
+      let offset = 0;
+      for (const chunk of chunks) { combined.set(chunk, offset); offset += chunk.length; }
+      const blob = new Blob([combined], { type: 'application/pdf' });
+
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = resource.title || 'document.pdf';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      toast({ title: 'Download complete!' });
+    } catch (err) {
+      console.error('Download error:', err);
+      toast({ title: 'Opening download...', description: 'File will download in new tab.' });
+      window.open(streamUrl, '_blank');
+    } finally {
+      setIsDownloading(false);
+      setDownloadProgress(0);
+    }
+  };
+
   return (
-    <Card className="group flex flex-col overflow-hidden card-hover border-border/50 hover:border-primary/30 bg-card h-full">
-      <CardHeader className="pb-3 space-y-3">
-        <div className="flex items-start gap-4">
-          <div className="flex-1 min-w-0">
-            <CardTitle className="text-base leading-tight mb-2 line-clamp-2">
-              <Link href={`/pdfs/${resource.id}`} className="hover:text-primary smooth-hover">
-                {resource.title}
+    <>
+      <Card className="group flex flex-col overflow-hidden card-hover border-border/50 hover:border-primary/30 bg-card h-full">
+        <CardHeader className="pb-3 space-y-3">
+          <div className="flex items-start gap-4">
+            <div className="flex-1 min-w-0">
+              <CardTitle className="text-base leading-tight mb-2 line-clamp-2">
+                <Link href={`/pdfs/${resource.id}`} className="hover:text-primary smooth-hover">
+                  {resource.title}
+                </Link>
+              </CardTitle>
+            </div>
+          </div>
+        </CardHeader>
+
+        <CardContent className="flex-grow pb-3 space-y-3">
+          <p className="text-sm text-muted-foreground line-clamp-2">
+            {resource.description || 'No description available'}
+          </p>
+
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            {medium && (
+              <div className="flex items-center gap-1.5">
+                <Languages className="w-3.5 h-3.5" />
+                <span>{medium.replace(' Medium', '')}</span>
+              </div>
+            )}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1">
+                <Eye className="w-3.5 h-3.5" />
+                <span>{resource.views}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <TrendingUp className="w-3.5 h-3.5 text-primary" />
+                <span className="font-medium">{resource.downloads}</span>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+
+        <CardFooter className="flex-col items-start gap-3 pt-3 border-t border-border/50">
+          <div className="flex flex-wrap gap-1.5">
+            {grade && <Badge variant="outline" className="border-border/50">{grade}</Badge>}
+            {subject && <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20 hover:bg-primary/20">{subject}</Badge>}
+            {resourceType && <Badge variant="secondary" className="text-xs bg-primary/5 text-primary hover:bg-primary/10 border border-primary/20">{resourceType}</Badge>}
+          </div>
+
+          <div className="w-full flex gap-2">
+            <Button asChild size="sm" className="flex-1 rounded-lg smooth-hover">
+              <Link href={`/pdfs/${resource.id}`}>
+                <Eye className="mr-1.5 h-3.5 w-3.5" /> View
               </Link>
-            </CardTitle>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1 rounded-lg hover:bg-primary/5 hover:border-primary smooth-hover"
+              onClick={handleDownload}
+              disabled={isDownloading}
+            >
+              {isDownloading ? (
+                <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> {downloadProgress}%</>
+              ) : (
+                <><Download className="mr-1.5 h-3.5 w-3.5" /> Download</>
+              )}
+            </Button>
           </div>
-        </div>
-      </CardHeader>
+        </CardFooter>
+      </Card>
 
-      <CardContent className="flex-grow pb-3 space-y-3">
-        <p className="text-sm text-muted-foreground line-clamp-2">
-          {resource.description || 'No description available'}
-        </p>
-
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          {medium && (
-            <div className="flex items-center gap-1.5">
-              <Languages className="w-3.5 h-3.5" />
-              <span>{medium.replace(' Medium', '')}</span>
+      {/* Download Progress Dialog */}
+      <Dialog open={isDownloading} onOpenChange={() => { }}>
+        <DialogContent className="sm:max-w-md" onPointerDownOutside={(e) => e.preventDefault()}>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Download className="h-5 w-5" /> Downloading...
+            </DialogTitle>
+            <DialogDescription>Please wait while your file is being downloaded.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Progress value={downloadProgress} className="h-3" />
+            <div className="flex justify-between text-sm text-muted-foreground">
+              <span>{downloadedBytes > 0 ? `${(downloadedBytes / (1024 * 1024)).toFixed(2)} MB` : 'Starting...'}</span>
+              <span>{totalBytes > 0 ? `${(totalBytes / (1024 * 1024)).toFixed(2)} MB` : 'Calculating...'}</span>
             </div>
-          )}
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1">
-              <Eye className="w-3.5 h-3.5" />
-              <span>{resource.views}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <TrendingUp className="w-3.5 h-3.5 text-primary" />
-              <span className="font-medium">{resource.downloads}</span>
-            </div>
+            <div className="text-center text-lg font-semibold text-primary">{downloadProgress}%</div>
           </div>
-        </div>
-      </CardContent>
-
-      <CardFooter className="flex-col items-start gap-3 pt-3 border-t border-border/50">
-        <div className="flex flex-wrap gap-1.5">
-          {grade && (
-            <Badge variant="outline" className="border-border/50">
-              {grade}
-            </Badge>
-          )}
-          {subject && (
-            <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20 hover:bg-primary/20">
-              {subject}
-            </Badge>
-          )}
-          {resourceType && (
-            <Badge variant="secondary" className="text-xs bg-primary/5 text-primary hover:bg-primary/10 border border-primary/20">
-              {resourceType}
-            </Badge>
-          )}
-        </div>
-
-        <div className="w-full flex gap-2">
-          <Button asChild size="sm" className="flex-1 rounded-lg smooth-hover">
-            <Link href={`/pdfs/${resource.id}`}>
-              <Eye className="mr-1.5 h-3.5 w-3.5" /> View
-            </Link>
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex-1 rounded-lg hover:bg-primary/5 hover:border-primary smooth-hover"
-            onClick={() => {
-              if (resource.driveFileId) {
-                window.open(`https://drive.google.com/uc?export=download&id=${resource.driveFileId}`, '_blank');
-              }
-            }}
-          >
-            <Download className="mr-1.5 h-3.5 w-3.5" /> Download
-          </Button>
-        </div>
-      </CardFooter>
-    </Card>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 

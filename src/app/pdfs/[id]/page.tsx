@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState, use, useCallback } from 'react';
+import { useEffect, useState, use, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Document, Page, pdfjs } from 'react-pdf';
+import dynamic from 'next/dynamic';
 import { Button } from '@/components/ui/button';
 import {
   Download, Share, Calendar, Book, GraduationCap, Languages, Tag, FileText,
@@ -20,8 +20,9 @@ import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
-// Configure PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+// Dynamic import for react-pdf to avoid SSR issues with DOMMatrix
+const Document = dynamic(() => import('react-pdf').then(mod => mod.Document), { ssr: false });
+const Page = dynamic(() => import('react-pdf').then(mod => mod.Page), { ssr: false });
 
 // Import react-pdf styles
 import 'react-pdf/dist/Page/AnnotationLayer.css';
@@ -63,6 +64,31 @@ function PDFViewer({ resourceId, title }: { resourceId: string; title: string })
   const [rotation, setRotation] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [containerWidth, setContainerWidth] = useState<number>(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Configure PDF.js worker (client-side only)
+  useEffect(() => {
+    import('react-pdf').then(({ pdfjs }) => {
+      pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+    });
+  }, []);
+
+  // Track container width for responsive PDF rendering
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const updateWidth = () => {
+      setContainerWidth(container.clientWidth - 32); // Subtract padding
+    };
+
+    updateWidth();
+    const resizeObserver = new ResizeObserver(updateWidth);
+    resizeObserver.observe(container);
+
+    return () => resizeObserver.disconnect();
+  }, []);
 
   // Use the stream API endpoint
   const pdfUrl = `${process.env.NEXT_PUBLIC_API_URL || 'https://server.apearchive.lk'}/api/v1/resources/${resourceId}/stream`;
@@ -88,35 +114,40 @@ function PDFViewer({ resourceId, title }: { resourceId: string; title: string })
   return (
     <div className="flex flex-col h-full">
       {/* PDF Toolbar */}
-      <div className="flex items-center justify-between gap-2 p-3 bg-muted/50 border-b rounded-t-lg flex-wrap">
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={goToPrevPage} disabled={pageNumber <= 1}>
+      <div className="flex items-center justify-center gap-2 sm:gap-4 p-2 sm:p-3 bg-muted/50 border-b rounded-t-lg flex-wrap">
+        {/* Page Navigation */}
+        <div className="flex items-center gap-1 sm:gap-2">
+          <Button variant="outline" size="icon" className="h-8 w-8 sm:h-9 sm:w-9" onClick={goToPrevPage} disabled={pageNumber <= 1}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <span className="text-sm min-w-[80px] text-center">
+          <span className="text-xs sm:text-sm min-w-[60px] sm:min-w-[80px] text-center font-medium">
             {pageNumber} / {numPages || '?'}
           </span>
-          <Button variant="outline" size="sm" onClick={goToNextPage} disabled={pageNumber >= numPages}>
+          <Button variant="outline" size="icon" className="h-8 w-8 sm:h-9 sm:w-9" onClick={goToNextPage} disabled={pageNumber >= numPages}>
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={zoomOut} disabled={scale <= 0.5}>
+        {/* Divider - hidden on mobile */}
+        <div className="hidden sm:block w-px h-6 bg-border" />
+
+        {/* Zoom Controls */}
+        <div className="flex items-center gap-1 sm:gap-2">
+          <Button variant="outline" size="icon" className="h-8 w-8 sm:h-9 sm:w-9" onClick={zoomOut} disabled={scale <= 0.5}>
             <ZoomOut className="h-4 w-4" />
           </Button>
-          <span className="text-sm min-w-[50px] text-center">{Math.round(scale * 100)}%</span>
-          <Button variant="outline" size="sm" onClick={zoomIn} disabled={scale >= 3}>
+          <span className="text-xs sm:text-sm min-w-[40px] sm:min-w-[50px] text-center font-medium">{Math.round(scale * 100)}%</span>
+          <Button variant="outline" size="icon" className="h-8 w-8 sm:h-9 sm:w-9" onClick={zoomIn} disabled={scale >= 3}>
             <ZoomIn className="h-4 w-4" />
           </Button>
-          <Button variant="outline" size="sm" onClick={rotate}>
+          <Button variant="outline" size="icon" className="h-8 w-8 sm:h-9 sm:w-9" onClick={rotate}>
             <RotateCw className="h-4 w-4" />
           </Button>
         </div>
       </div>
 
       {/* PDF Content */}
-      <div className="flex-1 overflow-auto bg-muted/30 flex items-start justify-center p-4 min-h-[500px]">
+      <div ref={containerRef} className="flex-1 overflow-auto bg-muted/30 flex items-start justify-center p-4 min-h-[500px]">
         {isLoading && (
           <div className="flex flex-col items-center justify-center py-16 gap-4">
             <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -142,17 +173,18 @@ function PDFViewer({ resourceId, title }: { resourceId: string; title: string })
             pageNumber={pageNumber}
             scale={scale}
             rotate={rotation}
-            className="shadow-lg"
+            className="shadow-lg max-w-full"
             renderTextLayer={true}
             renderAnnotationLayer={true}
+            width={containerWidth > 0 && scale === 1.0 ? Math.min(containerWidth, 800) : undefined}
           />
         </Document>
       </div>
 
       {/* Page slider for quick navigation */}
       {numPages > 1 && (
-        <div className="p-3 bg-muted/50 border-t rounded-b-lg">
-          <div className="flex items-center gap-4">
+        <div className="p-2 sm:p-3 bg-muted/50 border-t rounded-b-lg">
+          <div className="flex items-center gap-2 sm:gap-4">
             <span className="text-xs text-muted-foreground">Page</span>
             <Slider
               value={[pageNumber]}

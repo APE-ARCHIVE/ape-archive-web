@@ -1,4 +1,15 @@
+import { Metadata } from 'next';
 import { GraduationCap, Heart, Lightbulb } from "lucide-react"
+
+export const metadata: Metadata = {
+  title: 'About Us',
+  description: 'Learn about APE ARCHIVE - our mission to provide free A/L study materials for Sri Lankan students, our vision, values, and the story behind our platform.',
+  openGraph: {
+    title: 'About APE ARCHIVE',
+    description: 'Learn about our mission to provide free A/L study materials for Sri Lankan students.',
+    type: 'website',
+  },
+};
 
 export default function AboutPage() {
   return (
