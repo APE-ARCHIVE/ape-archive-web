@@ -77,7 +77,7 @@ export function UploadForm() {
   useEffect(() => {
     async function fetchTags() {
       try {
-        const response = await apiClient.get('/api/v1/library/tags');
+        const response = await apiClient.get('/api/v1/tags/');
         console.log('Tags API response:', response.data);
 
         if (response.data?.success && response.data?.data) {
