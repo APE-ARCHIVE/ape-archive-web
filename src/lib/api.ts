@@ -10,8 +10,7 @@ const AUTH_COOKIE_NAME = "accessToken";
 
 // Create axios instance with default config
 export const apiClient = axios.create({
-  baseURL:
-    process.env.NEXT_PUBLIC_API_URL || "",
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "",
   timeout: 30000,
   headers: {
     "Content-Type": "application/json",
@@ -56,8 +55,7 @@ apiClient.interceptors.response.use(
           console.error("Access forbidden");
           break;
         case 500:
-          // Handle server error
-          console.error("Server error");
+          // Server error - silently handled, mock data fallback will be used
           break;
       }
     }

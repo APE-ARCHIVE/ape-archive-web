@@ -499,15 +499,13 @@ function LibraryContent() {
           setResources([]);
         }
       } else {
-        // API returned success: false, try mock data
-        console.warn('API returned error, using mock data');
+        // API returned success: false, use mock data silently
         const mockData = getMockBrowseData(filters);
         setBrowseData(mockData);
         setResources(mockData.resources);
       }
-    } catch (err: unknown) {
-      console.error('Failed to fetch browse, using mock data:', err);
-      // Use mock data as fallback when API is unavailable
+    } catch {
+      // API unavailable, use mock data as fallback silently
       const mockData = getMockBrowseData(filters);
       setBrowseData(mockData);
       setResources(mockData.resources);
