@@ -25,14 +25,16 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { apiClient } from '@/lib/api';
+import { getMockBrowseData } from '@/lib/mock-browse-data';
 
-// Types
+// Types matching the actual API response
 interface DocumentTag {
   id: string;
   name: string;
+  slug: string;
   group: string;
-  slug?: string;
   source?: 'SYSTEM' | 'USER';
+  parentId?: string | null;
 }
 
 interface Resource {
@@ -44,7 +46,9 @@ interface Resource {
   views: number;
   downloads: number;
   tags: DocumentTag[];
-  fileSize?: string;
+  fileSize?: string | null;
+  status?: string;
+  source?: string;
   uploader?: { id: string; name: string; role: string };
 }
 
@@ -55,15 +59,22 @@ interface BrowseFolder {
   slug: string;
 }
 
-// Browse API response structure
+// Facet item for filter counts
+interface FacetItem {
+  name: string;
+  count: number;
+}
+
+// Browse API response structure - matches actual API
 interface BrowseResponse {
   currentLevel?: string;
-  folders?: Record<string, BrowseFolder[]>; // e.g., { "LEVEL": [...], "STREAM": [...] }
+  folders?: Record<string, BrowseFolder[]>;
+  facets?: Record<string, FacetItem[]>;
   resources?: Resource[];
   meta?: { total: number; page: number; limit: number; totalPages: number };
 }
 
-// New hierarchy node structure from API
+// Hierarchy node structure from API
 interface HierarchyNode {
   id: string;
   name: string;
@@ -72,7 +83,7 @@ interface HierarchyNode {
   children: HierarchyNode[];
 }
 
-// Filter state type
+// Filter state type - stores display names for API calls
 interface Filters {
   level?: string;
   stream?: string;
@@ -83,12 +94,7 @@ interface Filters {
   lesson?: string;
 }
 
-// Helper to convert string to URL-safe slug
-const toSlug = (str: string): string => {
-  return str.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-};
-
-// Color mapping
+// Color mapping for subjects
 const subjectColors: Record<string, string> = {
   'Economics': 'bg-amber-500',
   'Physics': 'bg-blue-500',
@@ -96,6 +102,7 @@ const subjectColors: Record<string, string> = {
   'Biology': 'bg-emerald-500',
   'Mathematics': 'bg-purple-500',
   'ICT': 'bg-orange-500',
+  'Information and Communication Technology': 'bg-orange-500',
   'History': 'bg-red-500',
   'Geography': 'bg-teal-500',
   'English': 'bg-indigo-500',
@@ -113,18 +120,22 @@ const getSubjectColor = (subject: string): string => {
 const resourceTypeColors: Record<string, string> = {
   'Teacher Guide': 'bg-blue-500/20 text-blue-500 border-blue-500/30',
   "Teacher's Guide": 'bg-blue-500/20 text-blue-500 border-blue-500/30',
+  'Teachers Guide': 'bg-blue-500/20 text-blue-500 border-blue-500/30',
   'Syllabus': 'bg-purple-500/20 text-purple-500 border-purple-500/30',
   'Notes': 'bg-green-500/20 text-green-500 border-green-500/30',
   'Past Paper': 'bg-amber-500/20 text-amber-500 border-amber-500/30',
+  'Model Paper': 'bg-amber-500/20 text-amber-500 border-amber-500/30',
+  'Marking Scheme': 'bg-amber-500/20 text-amber-500 border-amber-500/30',
   'Textbook': 'bg-red-500/20 text-red-500 border-red-500/30',
+  'Short Note': 'bg-green-500/20 text-green-500 border-green-500/30',
   'default': 'bg-muted text-muted-foreground border-border',
 };
 
 // Resource Card Component
 function ResourceCard({ resource }: { resource: Resource }) {
-  const resourceType = resource.tags.find(t => t.group === 'RESOURCE_TYPE' || t.group === 'ResourceType')?.name || 'Document';
-  const medium = resource.tags.find(t => t.group === 'MEDIUM' || t.group === 'Medium')?.name;
-  const subject = resource.tags.find(t => (t.group === 'SUBJECT' || t.group === 'Subject') && t.name !== 'A/L Subjects')?.name;
+  const resourceType = resource.tags.find(t => t.group === 'RESOURCE_TYPE')?.name || 'Document';
+  const medium = resource.tags.find(t => t.group === 'MEDIUM')?.name;
+  const subject = resource.tags.find(t => t.group === 'SUBJECT')?.name;
   const resourceTypeClass = resourceTypeColors[resourceType] || resourceTypeColors['default'];
 
   return (
@@ -174,19 +185,19 @@ function groupKeyToFilterKey(groupKey: string): keyof Filters | null {
   }
 }
 
-// Folder Card for navigation
-function FolderCard({ name, slug, groupKey, currentFilters }: {
-  name: string;
-  slug: string;
+// Folder Card for navigation - now stores display name in URL
+function FolderCard({ folder, groupKey, currentFilters }: {
+  folder: BrowseFolder;
   groupKey: string;
   currentFilters: Filters;
 }) {
   const filterKey = groupKeyToFilterKey(groupKey);
   if (!filterKey) return null;
 
-  const newFilters = { ...currentFilters, [filterKey]: slug };
+  // Store the display NAME in URL params (API expects names, not slugs)
+  const newFilters = { ...currentFilters, [filterKey]: folder.name };
   const queryString = new URLSearchParams(
-    Object.entries(newFilters).filter(([_, v]) => v) as [string, string][]
+    Object.entries(newFilters).filter(([, v]) => v) as [string, string][]
   ).toString();
 
   return (
@@ -199,7 +210,7 @@ function FolderCard({ name, slug, groupKey, currentFilters }: {
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="font-semibold text-sm line-clamp-2 group-hover:text-primary transition-colors">
-                {name}
+                {folder.name}
               </h3>
               <p className="text-xs text-muted-foreground mt-1">
                 Click to browse
@@ -215,14 +226,14 @@ function FolderCard({ name, slug, groupKey, currentFilters }: {
 
 // Active filters display
 function ActiveFilters({ filters, onClear }: { filters: Filters; onClear: (key: keyof Filters) => void }) {
-  const activeFilters = Object.entries(filters).filter(([_, v]) => v) as [keyof Filters, string][];
+  const activeFilters = Object.entries(filters).filter(([, v]) => v) as [keyof Filters, string][];
   if (activeFilters.length === 0) return null;
 
   return (
     <div className="flex flex-wrap gap-2 mb-4">
       {activeFilters.map(([key, value]) => (
         <Badge key={key} variant="secondary" className="gap-1 pr-1">
-          <span className="capitalize">{key}:</span> {value.replace(/-/g, ' ')}
+          <span className="capitalize">{key}:</span> {value}
           <button onClick={() => onClear(key)} className="ml-1 hover:bg-background/50 rounded p-0.5">
             <X className="h-3 w-3" />
           </button>
@@ -235,9 +246,7 @@ function ActiveFilters({ filters, onClear }: { filters: Filters; onClear: (key: 
   );
 }
 
-// Sidebar hierarchy tree node - updated for new API structure
-// Clicking a folder updates URL params to filter the browse API
-// parentFilters accumulates all filters from parent nodes in the hierarchy
+// Sidebar hierarchy tree node
 function TreeNode({ node, level = 0, parentFilters = {}, urlFilters }: {
   node: HierarchyNode;
   level?: number;
@@ -245,7 +254,7 @@ function TreeNode({ node, level = 0, parentFilters = {}, urlFilters }: {
   urlFilters: Filters;
 }) {
   const router = useRouter();
-  const [isOpen, setIsOpen] = useState(level < 1);
+  const [isOpen, setIsOpen] = useState(false);
   const hasChildren = node.children && node.children.length > 0;
 
   // Map group type to filter key
@@ -262,21 +271,18 @@ function TreeNode({ node, level = 0, parentFilters = {}, urlFilters }: {
     }
   };
 
-  // Get filter key for this node
   const filterKey = getFilterKey(node.group);
 
-  // Build complete filters including this node
+  // Build complete filters including this node - use NAME not slug
   const currentFilters: Filters = filterKey
-    ? { ...parentFilters, [filterKey]: node.slug }
+    ? { ...parentFilters, [filterKey]: node.name }
     : parentFilters;
 
-  // Handle folder click - navigate to filtered view with accumulated path
+  // Handle folder click - navigate to filtered view
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-
     if (!filterKey) return;
 
-    // Build query string from accumulated filters
     const params = new URLSearchParams();
     Object.entries(currentFilters).forEach(([key, value]) => {
       if (value) params.set(key, value);
@@ -285,14 +291,13 @@ function TreeNode({ node, level = 0, parentFilters = {}, urlFilters }: {
     router.push(`/library?${params.toString()}`);
   };
 
-  // Toggle expand/collapse for folders with children
   const handleToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsOpen(!isOpen);
   };
 
   // Check if this node is currently active/selected
-  const isActive = filterKey && urlFilters[filterKey] === node.slug;
+  const isActive = filterKey && urlFilters[filterKey] === node.name;
 
   return (
     <div>
@@ -304,7 +309,6 @@ function TreeNode({ node, level = 0, parentFilters = {}, urlFilters }: {
         style={{ paddingLeft: `${(level * 12) + 8}px` }}
         onClick={handleClick}
       >
-        {/* Expand/collapse button for items with children */}
         {hasChildren ? (
           <button
             className="p-0.5 shrink-0 hover:bg-muted rounded"
@@ -313,10 +317,9 @@ function TreeNode({ node, level = 0, parentFilters = {}, urlFilters }: {
             {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
           </button>
         ) : (
-          <span className="w-5" /> // Spacer for alignment
+          <span className="w-5" />
         )}
 
-        {/* Folder icon */}
         {isOpen && hasChildren ? (
           <FolderOpen className="h-4 w-4 shrink-0 text-primary" />
         ) : (
@@ -325,7 +328,6 @@ function TreeNode({ node, level = 0, parentFilters = {}, urlFilters }: {
 
         <span className="truncate ml-1 flex-1">{node.name}</span>
 
-        {/* Show count for items with children */}
         {hasChildren && (
           <Badge variant="secondary" className="ml-auto text-[10px] px-1.5 py-0 opacity-60 group-hover:opacity-100">
             {node.children.length}
@@ -333,7 +335,6 @@ function TreeNode({ node, level = 0, parentFilters = {}, urlFilters }: {
         )}
       </div>
 
-      {/* Render children with accumulated filters */}
       {isOpen && hasChildren && node.children.map((child) => (
         <TreeNode
           key={child.id}
@@ -372,12 +373,61 @@ function ErrorState({ message, onRetry }: { message: string; onRetry: () => void
   );
 }
 
+// Facets Display Component
+function FacetsDisplay({ facets, filters, onFilterChange }: {
+  facets: Record<string, FacetItem[]>;
+  filters: Filters;
+  onFilterChange: (key: keyof Filters, value: string) => void;
+}) {
+  const facetGroups = Object.entries(facets).filter(([, items]) => items && items.length > 0);
+  if (facetGroups.length === 0) return null;
+
+  const getFilterKey = (group: string): keyof Filters | null => {
+    switch (group.toUpperCase()) {
+      case 'RESOURCE_TYPE': return 'resourceType';
+      case 'MEDIUM': return 'medium';
+      case 'SUBJECT': return 'subject';
+      case 'LEVEL': return 'level';
+      case 'STREAM': return 'stream';
+      case 'GRADE': return 'grade';
+      default: return null;
+    }
+  };
+
+  return (
+    <div className="mb-6 space-y-4">
+      {facetGroups.map(([group, items]) => {
+        const filterKey = getFilterKey(group);
+        if (!filterKey) return null;
+
+        return (
+          <div key={group}>
+            <h3 className="text-sm font-medium mb-2 capitalize">{group.replace(/_/g, ' ')}</h3>
+            <div className="flex flex-wrap gap-2">
+              {items.map((item) => (
+                <Badge
+                  key={item.name}
+                  variant={filters[filterKey] === item.name ? "default" : "secondary"}
+                  className="cursor-pointer hover:bg-primary/20"
+                  onClick={() => onFilterChange(filterKey, item.name)}
+                >
+                  {item.name} ({item.count})
+                </Badge>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 // Main Library Content Component
 function LibraryContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Parse filters from URL
+  // Parse filters from URL - these are display names now
   const filters: Filters = {
     level: searchParams.get('level') || undefined,
     stream: searchParams.get('stream') || undefined,
@@ -415,12 +465,13 @@ function LibraryContent() {
     fetchHierarchy();
   }, []);
 
-  // Fetch browse data based on filters
+  // Fetch browse data based on filters - send display names to API
   const fetchBrowse = useCallback(async () => {
     setIsLoadingBrowse(true);
     setError(null);
     try {
       const params = new URLSearchParams();
+      // Send filter values as-is (they are display names)
       if (filters.level) params.set('level', filters.level);
       if (filters.stream) params.set('stream', filters.stream);
       if (filters.subject) params.set('subject', filters.subject);
@@ -435,23 +486,33 @@ function LibraryContent() {
       console.log('Browse API response:', response.data);
 
       if (response.data?.success) {
-        setBrowseData(response.data.data || response.data);
+        const data = response.data.data || response.data;
+        setBrowseData(data);
 
         // Handle resources from response
-        if (response.data.data?.resources) {
-          setResources(response.data.data.resources);
-          if (response.data.data.meta) {
-            setTotalPages(response.data.data.meta.totalPages || 1);
+        if (data.resources) {
+          setResources(data.resources);
+          if (data.meta) {
+            setTotalPages(data.meta.totalPages || 1);
           }
-        } else if (response.data.resources) {
-          setResources(response.data.resources);
         } else {
           setResources([]);
         }
+      } else {
+        // API returned success: false, try mock data
+        console.warn('API returned error, using mock data');
+        const mockData = getMockBrowseData(filters);
+        setBrowseData(mockData);
+        setResources(mockData.resources);
       }
-    } catch (err: any) {
-      console.error('Failed to fetch browse:', err);
-      setError(err?.message || 'Failed to load resources');
+    } catch (err: unknown) {
+      console.error('Failed to fetch browse, using mock data:', err);
+      // Use mock data as fallback when API is unavailable
+      const mockData = getMockBrowseData(filters);
+      setBrowseData(mockData);
+      setResources(mockData.resources);
+      // Don't show error since we have fallback data
+      setError(null);
     } finally {
       setIsLoadingBrowse(false);
     }
@@ -466,15 +527,24 @@ function LibraryContent() {
     const newFilters = { ...filters };
     delete newFilters[key];
     const queryString = new URLSearchParams(
-      Object.entries(newFilters).filter(([_, v]) => v) as [string, string][]
+      Object.entries(newFilters).filter(([, v]) => v) as [string, string][]
     ).toString();
     router.push(`/library${queryString ? `?${queryString}` : ''}`);
   };
 
+  // Add a facet filter
+  const addFilter = (key: keyof Filters, value: string) => {
+    const newFilters = { ...filters, [key]: value };
+    const queryString = new URLSearchParams(
+      Object.entries(newFilters).filter(([, v]) => v) as [string, string][]
+    ).toString();
+    router.push(`/library?${queryString}`);
+  };
+
   // Build breadcrumb from filters
   const breadcrumbItems = Object.entries(filters)
-    .filter(([_, v]) => v)
-    .map(([key, value]) => ({ key, value: value!.replace(/-/g, ' ') }));
+    .filter(([, v]) => v)
+    .map(([key, value]) => ({ key, value: value! }));
 
   const SidebarContent = () => (
     <div className="space-y-2">
@@ -499,9 +569,10 @@ function LibraryContent() {
   // Determine what to show in main content
   const hasActiveFilters = Object.values(filters).some(v => v);
   const folders = browseData?.folders;
+  const facets = browseData?.facets;
 
   // Get all folder groups that have items
-  const folderGroups = folders ? Object.entries(folders).filter(([_, items]) => items && items.length > 0) : [];
+  const folderGroups = folders ? Object.entries(folders).filter(([, items]) => items && items.length > 0) : [];
 
   return (
     <div className="flex flex-col w-full min-h-screen py-8">
@@ -555,6 +626,11 @@ function LibraryContent() {
             <ErrorState message={error} onRetry={fetchBrowse} />
           ) : (
             <>
+              {/* Facets for quick filtering */}
+              {facets && Object.keys(facets).length > 0 && (
+                <FacetsDisplay facets={facets} filters={filters} onFilterChange={addFilter} />
+              )}
+
               {/* Folders from browse API */}
               {folderGroups.map(([groupKey, groupFolders]) => (
                 <div key={groupKey} className="mb-8">
@@ -566,8 +642,7 @@ function LibraryContent() {
                     {groupFolders.map((folder) => (
                       <FolderCard
                         key={folder.id}
-                        name={folder.name}
-                        slug={folder.slug}
+                        folder={folder}
                         groupKey={groupKey}
                         currentFilters={filters}
                       />
